@@ -1,0 +1,6 @@
+{
+  "name": "DataSage AI",
+  "description": "Talk to Your Spreadsheet with AI - Natural language interface for data analysis, datasets, and analytics dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
