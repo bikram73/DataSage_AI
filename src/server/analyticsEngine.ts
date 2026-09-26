@@ -835,25 +835,37 @@ export function computeDatasetStatistics(dataset: DatasetMetadata) {
   const numericSummaries: Record<string, { mean: number; std: number; min: number; p25: number; median: number; p75: number; max: number }> = {};
 
   numericCols.forEach((col) => {
-    const vals = rows
-      .map((r) => parseNumericValue(r[col.name]))
-      .filter((v): v is number => v !== null)
-      .sort((a, b) => a - b);
+    const colKey = col.name;
+    const len = rows.length;
+    const vals: number[] = [];
+    let sum = 0;
+    let sumSq = 0;
 
-    if (vals.length === 0) return;
+    for (let i = 0; i < len; i++) {
+      const v = parseNumericValue(rows[i][colKey]);
+      if (v !== null) {
+        vals.push(v);
+        sum += v;
+        sumSq += v * v;
+      }
+    }
 
-    const sum = vals.reduce((a, b) => a + b, 0);
-    const mean = sum / vals.length;
-    const variance = vals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vals.length;
+    const n = vals.length;
+    if (n === 0) return;
+
+    vals.sort((a, b) => a - b);
+
+    const mean = sum / n;
+    const variance = Math.max(0, (sumSq / n) - (mean * mean));
     const std = Math.sqrt(variance);
 
     const min = vals[0];
-    const max = vals[vals.length - 1];
-    const p25 = vals[Math.floor(vals.length * 0.25)];
-    const median = vals[Math.floor(vals.length * 0.5)];
-    const p75 = vals[Math.floor(vals.length * 0.75)];
+    const max = vals[n - 1];
+    const p25 = vals[Math.floor(n * 0.25)];
+    const median = vals[Math.floor(n * 0.5)];
+    const p75 = vals[Math.floor(n * 0.75)];
 
-    numericSummaries[col.name] = {
+    numericSummaries[colKey] = {
       mean: parseFloat(mean.toFixed(2)),
       std: parseFloat(std.toFixed(2)),
       min: parseFloat(min.toFixed(2)),

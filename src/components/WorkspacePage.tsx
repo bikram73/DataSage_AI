@@ -20,11 +20,22 @@ interface ChatMessage {
 
 const CHART_COLORS = ['#004ac6', '#06B6D4', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#EC4899'];
 
+// In-memory workspace session cache (survives tab switching, cleared on page refresh or dataset removal)
+let cachedDatasetId: string | null = null;
+let cachedMessages: ChatMessage[] = [];
+let cachedActiveResult: QueryResult | null = null;
+
+export function resetWorkspaceCache() {
+  cachedDatasetId = null;
+  cachedMessages = [];
+  cachedActiveResult = null;
+}
+
 export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   const [inputQuery, setInputQuery] = useState('');
   const [activeDataset, setActiveDataset] = useState<PreviewData | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [activeResult, setActiveResult] = useState<QueryResult | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => cachedMessages);
+  const [activeResult, setActiveResult] = useState<QueryResult | null>(() => cachedActiveResult);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSample, setLoadingSample] = useState(false);
@@ -155,15 +166,31 @@ ${msg.result.pythonCode}
       .then((ds) => {
         if (ds && ds.name) {
           setActiveDataset(ds);
-          const initialMsg: ChatMessage = {
-            id: '1',
-            sender: 'ai',
-            text: `Hello! I'm DataSage AI. I've loaded your spreadsheet **"${ds.name}"** containing **${ds.rowCount.toLocaleString()}** rows and **${ds.columnCount}** columns. Ask me anything in plain English!`,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          setMessages([initialMsg]);
+          if (cachedDatasetId !== ds.id) {
+            // New or newly loaded dataset
+            cachedDatasetId = ds.id;
+            const initialMsg: ChatMessage = {
+              id: '1',
+              sender: 'ai',
+              text: `Hello! I'm DataSage AI. I've loaded your spreadsheet **"${ds.name}"** containing **${ds.rowCount.toLocaleString()}** rows and **${ds.columnCount}** columns. Ask me anything in plain English!`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            cachedMessages = [initialMsg];
+            cachedActiveResult = null;
+            setMessages([initialMsg]);
+            setActiveResult(null);
+          } else {
+            // Same dataset upon tab return: restore existing messages and results
+            if (cachedMessages.length > 0) {
+              setMessages(cachedMessages);
+            }
+            if (cachedActiveResult) {
+              setActiveResult(cachedActiveResult);
+            }
+          }
         } else {
           setActiveDataset(null);
+          resetWorkspaceCache();
         }
       })
       .catch(() => {
@@ -188,7 +215,11 @@ ${msg.result.pythonCode}
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => {
+      const updated = [...prev, userMsg];
+      cachedMessages = updated;
+      return updated;
+    });
     setInputQuery('');
     setIsGenerating(true);
 
@@ -202,7 +233,12 @@ ${msg.result.pythonCode}
         result: res
       };
 
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => {
+        const updated = [...prev, aiMsg];
+        cachedMessages = updated;
+        return updated;
+      });
+      cachedActiveResult = res;
       setActiveResult(res);
     } catch (err: any) {
       const errorMsg: ChatMessage = {
@@ -211,7 +247,11 @@ ${msg.result.pythonCode}
         text: `Sorry, I encountered an issue analyzing the dataset: ${err.message || 'Error executing query'}`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => {
+        const updated = [...prev, errorMsg];
+        cachedMessages = updated;
+        return updated;
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -223,13 +263,17 @@ ${msg.result.pythonCode}
       const ds = await loadSampleDataset('sales_data');
       const preview = await fetchDatasetPreview();
       setActiveDataset(preview || { ...ds, sampleRows: [] });
+      cachedDatasetId = ds.id;
       const initialMsg: ChatMessage = {
         id: Date.now().toString(),
         sender: 'ai',
         text: `Loaded **"${ds.name}"** (${ds.rowCount.toLocaleString()} rows, ${ds.columnCount} cols). What would you like to calculate or explore?`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
+      cachedMessages = [initialMsg];
+      cachedActiveResult = null;
       setMessages([initialMsg]);
+      setActiveResult(null);
     } catch (err) {
       console.error('Failed to load sample dataset', err);
     } finally {

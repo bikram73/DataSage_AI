@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { parseSpreadsheetFile } from '../utils/fileParser';
 import { uploadCustomDataset, loadSampleDataset, fetchSampleDatasets, fetchDatasetPreview, clearDataset, DatasetInfo } from '../services/api';
 import { SAMPLE_DATASETS } from '../data/sampleDatasets';
+import { resetWorkspaceCache } from './WorkspacePage';
 
 interface UploadPageProps {
   onNavigate: (tab: string) => void;
@@ -126,6 +127,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
     if (window.confirm('Are you sure you want to remove the current active dataset?')) {
       try {
         await clearDataset();
+        resetWorkspaceCache();
         setActiveDatasetInfo(null);
         setUploadState('idle');
       } catch (err) {

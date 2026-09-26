@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchDatasetPreview, clearDataset, loadSampleDataset, PreviewData } from '../services/api';
+import { resetWorkspaceCache } from './WorkspacePage';
 
 interface DatasetPreviewPageProps {
   onNavigate: (tab: string) => void;
@@ -36,6 +37,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
       setIsRemoving(true);
       try {
         await clearDataset();
+        resetWorkspaceCache();
         setPreviewData(null);
         setSelectedRows([]);
         setSearchTerm('');
