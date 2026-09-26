@@ -31,7 +31,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
 
   if (loading) {
     return (
-      <div id="dataset-preview-page" className="lg:ml-64 ml-0 min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#F8FAFC]">
+      <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#F8FAFC]">
         <div className="flex flex-col items-center gap-3">
           <span className="material-symbols-outlined text-[#2563EB] text-4xl animate-spin">sync</span>
           <p className="text-sm font-medium text-[#0F172A]">Loading dataset preview...</p>
@@ -42,7 +42,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
 
   if (error || !previewData) {
     return (
-      <div id="dataset-preview-page" className="lg:ml-64 ml-0 min-h-[calc(100vh-4rem)] p-4 sm:p-8 flex flex-col items-center justify-center bg-[#F8FAFC]">
+      <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] p-4 sm:p-8 flex flex-col items-center justify-center bg-[#F8FAFC]">
         <div className="bg-white p-6 rounded-2xl border border-red-200 text-center max-w-md">
           <span className="material-symbols-outlined text-red-500 text-4xl mb-2">warning</span>
           <h3 className="text-lg font-bold text-[#0F172A] mb-1">No Dataset Loaded</h3>
@@ -89,7 +89,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
   };
 
   return (
-    <div id="dataset-preview-page" className="lg:ml-64 ml-0 min-h-[calc(100vh-4rem)] flex flex-col bg-[#F8FAFC] text-[#0F172A]">
+    <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] flex flex-col bg-[#F8FAFC] text-[#0F172A]">
       {/* Sticky Header */}
       <header id="preview-header" className="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-4">

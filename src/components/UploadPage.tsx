@@ -79,7 +79,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div id="upload-page" className="lg:ml-64 ml-0 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-[#F8FAFC]">
+    <div id="upload-page" className="w-full p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-[#F8FAFC]">
       {/* Header Section */}
       <div className="max-w-3xl w-full mb-6 text-center">
         <h2 className="font-['Plus_Jakarta_Sans'] text-3xl font-bold text-[#0F172A] mb-1">

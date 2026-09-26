@@ -43,7 +43,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   }));
 
   return (
-    <div id="dashboard-page" className="lg:ml-64 ml-0 p-4 sm:p-6 md:p-8 min-h-[calc(100vh-4rem)] max-w-[1440px] mx-auto bg-[#F8FAFC] text-[#0F172A]">
+    <div id="dashboard-page" className="w-full p-4 sm:p-6 md:p-8 min-h-[calc(100vh-4rem)] max-w-[1440px] mx-auto bg-[#F8FAFC] text-[#0F172A]">
       {/* Header */}
       <header id="dashboard-header" className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
