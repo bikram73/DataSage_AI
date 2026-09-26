@@ -2,9 +2,9 @@
 
 <div align="center">
 
-[![Test Status](https://img.shields.io/badge/Test_Suite-52%20Passed%20%2F%200%20Failed-success?style=for-the-badge&logo=checkmarx&logoColor=white)](./README.md)
-[![Quality Gate](https://img.shields.io/badge/Quality_Gate-🟢%20VERIFIED--PASS-brightgreen?style=for-the-badge)](./README.md)
-[![Pass Rate](https://img.shields.io/badge/Pass_Rate-100.00%25-004ac6?style=for-the-badge)](./README.md)
+[![Test Status](https://img.shields.io/badge/Test_Suite-51%20Passed%20%2F%201%20Failed-critical?style=for-the-badge&logo=checkmarx&logoColor=white)](./README.md)
+[![Quality Gate](https://img.shields.io/badge/Quality_Gate-🔴%20ACTION--REQUIRED-brightgreen?style=for-the-badge)](./README.md)
+[![Pass Rate](https://img.shields.io/badge/Pass_Rate-98.08%25-004ac6?style=for-the-badge)](./README.md)
 
 </div>
 
@@ -21,8 +21,8 @@
 | **Execution Command** | `npm test` (`tsx tests/e2eTestSuite.ts`) |
 | **Tested Datasets** | Dataset A (Sales 1k), Dataset B (Ground Truth 6 rows), Dataset C (Missing Values), Dataset D (Duplicate Columns), Dataset E (Dates), Dataset F (100k Rows Large Stress Test), HR Analytics, Marketing Campaign ROI |
 | **Total Test Assertions** | **52** |
-| **Passed Tests** | **52** (100.00%) |
-| **Failed Tests** | **0** |
+| **Passed Tests** | **51** (98.08%) |
+| **Failed Tests** | **1** |
 | **HTTP API Integration Verified** | **Yes** (Real ephemeral HTTP Express server tests) |
 | **Responsive UI Validation** | **Verified** across Desktop (1440×900), Laptop (1280×720), Tablet (768×1024), and Mobile (390×844) viewport layouts |
 
@@ -40,9 +40,9 @@
 | **Security** | 2 | 2 | 0 | 0 | 🟢 PASS |
 | **Boundaries** | 2 | 2 | 0 | 0 | 🟢 PASS |
 | **API Integration** | 10 | 10 | 0 | 0 | 🟢 PASS |
-| **Scale & Performance** | 3 | 3 | 0 | 0 | 🟢 PASS |
+| **Scale & Performance** | 3 | 2 | 1 | 0 | 🔴 FAIL |
 | **Contract Invariants** | 10 | 10 | 0 | 0 | 🟢 PASS |
-| **TOTAL** | **52** | **52** | **0** | **0** | **🟢 100% PASS** |
+| **TOTAL** | **52** | **51** | **1** | **0** | **🔴 FAIL** |
 
 ---
 
@@ -121,9 +121,9 @@ Layout structure, overflow prevention, and mobile navigation were verified acros
 | 37 | `TC-API-008` | **API Integration** | POST /api/query after clear returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
 | 38 | `TC-API-009` | **API Integration** | POST /api/chart after clear returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
 | 39 | `TC-API-010` | **API Integration** | POST /api/upload with empty rows returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
-| 40 | `TC-LARGE-001` | **Scale & Performance** | Ingest 100,000 rows in memory | `100,000 rows` | `100000 rows (475.9ms)` | 🟢 PASS |
-| 41 | `TC-LARGE-002` | **Scale & Performance** | 100k row GroupBy Aggregation completes in < 250ms | `< 250ms and >= 5 breakdown rows` | `52.1ms (5 rows)` | 🟢 PASS |
-| 42 | `TC-LARGE-003` | **Scale & Performance** | 100k row descriptive stats in < 300ms | `< 300ms` | `287.6ms` | 🟢 PASS |
+| 40 | `TC-LARGE-001` | **Scale & Performance** | Ingest 100,000 rows in memory | `100,000 rows` | `100000 rows (429.6ms)` | 🟢 PASS |
+| 41 | `TC-LARGE-002` | **Scale & Performance** | 100k row GroupBy Aggregation completes in < 250ms | `< 250ms and >= 5 breakdown rows` | `56.3ms (5 rows)` | 🟢 PASS |
+| 42 | `TC-LARGE-003` | **Scale & Performance** | 100k row descriptive stats in < 300ms | `< 300ms` | `305.7ms` | 🔴 FAIL |
 | 43 | `TC-CONTRACT-1` | **Contract Invariants** | Query Contract: "What is total sales by region?" | `Valid contract with answer, table, calculation, time` | `Answer (126 chars), Table (4 rows)` | 🟢 PASS |
 | 44 | `TC-CONTRACT-2` | **Contract Invariants** | Query Contract: "What is average profit by product category?" | `Valid contract with answer, table, calculation, time` | `Answer (131 chars), Table (5 rows)` | 🟢 PASS |
 | 45 | `TC-CONTRACT-3` | **Contract Invariants** | Query Contract: "Show top 5 products by revenue" | `Valid contract with answer, table, calculation, time` | `Answer (104 chars), Table (5 rows)` | 🟢 PASS |
@@ -141,8 +141,8 @@ Layout structure, overflow prevention, and mobile navigation were verified acros
 
 ```text
 Total Tests: 52
-Passed: 52
-Failed: 0
+Passed: 51
+Failed: 1
 Blocked: 0
 
 API Integration: PASS
