@@ -24,42 +24,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile & Tablet Header Bar (< lg) */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] z-40 px-4 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="p-1.5 rounded-lg text-[#0f172a] hover:bg-[#F1F5F9] transition-colors focus:outline-none"
-            aria-label="Toggle Navigation Menu"
-          >
-            <span className="material-symbols-outlined text-2xl">
-              {isMobileOpen ? 'close' : 'menu'}
-            </span>
-          </button>
-          <div 
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => handleNavClick('landing')}
-          >
-            <div className="w-7 h-7 rounded-lg bg-[#004ac6] flex items-center justify-center text-white shadow-xs">
-              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                insights
-              </span>
-            </div>
-            <span className="font-bold text-base text-[#004ac6] font-['Plus_Jakarta_Sans']">
-              DataSage AI
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => handleNavClick('workspace')}
-          className="px-3 py-1.5 bg-[#004ac6] text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs hover:brightness-110 active:scale-95 transition-all"
-        >
-          <span className="material-symbols-outlined text-sm">auto_awesome</span>
-          <span>Ask AI</span>
-        </button>
-      </header>
-
       {/* Mobile/Tablet Backdrop Overlay */}
       {isMobileOpen && (
         <div 
@@ -71,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Responsive Sidebar Drawer */}
       <aside
         id="app-sidebar"
-        className={`h-screen w-64 fixed left-0 top-0 bg-white/95 backdrop-blur-xl border-r border-[#c3c6d7]/20 flex flex-col p-4 gap-2 z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`h-[calc(100vh-4rem)] w-64 fixed left-0 top-16 bg-white/95 backdrop-blur-xl border-r border-[#c3c6d7]/20 flex flex-col p-4 gap-2 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >

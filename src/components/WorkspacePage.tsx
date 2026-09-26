@@ -107,7 +107,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div id="workspace-page" className="lg:ml-64 ml-0 pt-14 lg:pt-0 flex-1 flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] lg:h-screen overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
+    <div id="workspace-page" className="lg:ml-64 ml-0 flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
       {/* Central Chat Interface */}
       <section className="flex-1 flex flex-col h-full bg-white relative border-r border-[#E2E8F0] overflow-hidden">
         {/* Chat Header */}

@@ -6,48 +6,8 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   return (
-    <div id="landing-page" className="min-h-screen bg-[#faf8ff] text-[#191b23] font-['Inter'] selection:bg-[#2563eb] selection:text-white">
-      {/* Top Navigation Bar */}
-      <nav id="landing-nav" className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-[#c3c6d7]/30 shadow-sm h-16">
-        <div className="flex items-center justify-between px-4 sm:px-8 h-full max-w-[1440px] mx-auto">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('landing')}>
-            <span className="material-symbols-outlined text-[#004ac6] text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-              analytics
-            </span>
-            <span className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-[#004ac6]">DataSage AI</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-[#434655] hover:text-[#004ac6] transition-colors text-sm font-medium">
-              Features
-            </a>
-            <a href="#workflow" className="text-[#434655] hover:text-[#004ac6] transition-colors text-sm font-medium">
-              How It Works
-            </a>
-            <button onClick={() => onNavigate('workspace')} className="text-[#434655] hover:text-[#004ac6] transition-colors text-sm font-medium">
-              Demo
-            </button>
-            <button onClick={() => onNavigate('dashboard')} className="text-[#434655] hover:text-[#004ac6] transition-colors text-sm font-medium">
-              Dashboard
-            </button>
-            <button onClick={() => onNavigate('preview')} className="text-[#434655] hover:text-[#004ac6] transition-colors text-sm font-medium">
-              Datasets
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button 
-              id="landing-getstarted-btn"
-              onClick={() => onNavigate('upload')}
-              className="bg-[#004ac6] text-white font-['Plus_Jakarta_Sans'] font-semibold px-5 py-2 rounded-lg shadow-md hover:brightness-110 active:scale-95 transition-all text-sm"
-            >
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="pt-24">
+    <div id="landing-page" className="min-h-screen bg-[#faf8ff] text-[#191b23] font-['Inter'] selection:bg-[#2563eb] selection:text-white pt-16">
+      <main>
         {/* Hero Section */}
         <section id="hero-section" className="relative overflow-hidden px-8 py-10 lg:py-20 max-w-[1440px] mx-auto">
           <div className="grid lg:grid-cols-2 gap-10 items-center relative z-10">
