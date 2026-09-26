@@ -18,9 +18,11 @@ export default function App() {
     <div className="min-h-screen bg-[#faf8ff] font-['Inter'] text-[#191b23] flex flex-col antialiased">
       <Navbar activeTab={activeTab} onNavigate={handleNavigate} />
       {activeTab === 'landing' ? (
-        <LandingPage onNavigate={handleNavigate} />
+        <div className="pb-16 md:pb-0">
+          <LandingPage onNavigate={handleNavigate} />
+        </div>
       ) : (
-        <div className="flex flex-1 min-h-[calc(100vh-4rem)] pt-16">
+        <div className="flex flex-1 min-h-[calc(100vh-4rem)] pt-16 pb-16 md:pb-0">
           <main className="flex-1 min-h-[calc(100vh-4rem)]">
             {activeTab === 'upload' && <UploadPage onNavigate={handleNavigate} />}
             {activeTab === 'preview' && <DatasetPreviewPage onNavigate={handleNavigate} />}

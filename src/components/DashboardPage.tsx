@@ -120,33 +120,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   }));
 
   return (
-    <div id="dashboard-page" className="w-full p-4 sm:p-6 md:p-8 min-h-[calc(100vh-4rem)] max-w-[1440px] mx-auto bg-[#F8FAFC] text-[#0F172A]">
+    <div id="dashboard-page" className="w-full p-3 sm:p-6 md:p-8 min-h-[calc(100vh-4rem)] max-w-[1440px] mx-auto bg-[#F8FAFC] text-[#0F172A]">
       {/* Header */}
-      <header id="dashboard-header" className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+      <header id="dashboard-header" className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div>
-          <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-bold text-[#0F172A]">
+          <h2 className="font-['Plus_Jakarta_Sans'] text-xl sm:text-2xl md:text-3xl font-bold text-[#0F172A]">
             Dataset Health & Analytics Dashboard
           </h2>
-          <p className="text-[#64748B] text-xs sm:text-sm mt-1">
+          <p className="text-[#64748B] text-xs sm:text-sm mt-0.5 sm:mt-1">
             Real-time spreadsheet metrics for: <span className="font-semibold text-[#004ac6]">{dataStats.datasetName}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={handleRemoveDataset}
             disabled={isRemoving}
             title="Remove and empty this dataset"
-            className="bg-white border border-red-200 text-red-600 font-medium text-xs px-3 py-2 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1.5"
+            className="bg-white border border-red-200 text-red-600 font-medium text-xs px-3 py-2 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1.5 min-h-[38px]"
           >
             <span className="material-symbols-outlined text-[18px]">delete_outline</span>
             <span className="hidden sm:inline">Remove Dataset</span>
-            <span className="sm:hidden">Remove</span>
+            <span className="sm:hidden text-[11px]">Remove</span>
           </button>
 
           <button
             onClick={() => onNavigate('workspace')}
-            className="bg-[#004ac6] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-md hover:brightness-110 transition-all flex items-center gap-1.5"
+            className="bg-[#004ac6] text-white text-xs font-semibold px-3.5 sm:px-4 py-2 rounded-xl shadow-xs hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 min-h-[38px]"
           >
             <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
             <span>Ask AI Questions</span>
@@ -155,67 +155,67 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       </header>
 
       {/* KPI Cards Section */}
-      <section id="kpi-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <section id="kpi-cards" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {/* Total Rows */}
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[#64748B] text-xs font-medium">Total Rows</span>
-            <span className="material-symbols-outlined text-[#004ac6]">table_rows</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium">Total Rows</span>
+            <span className="material-symbols-outlined text-[#004ac6] text-lg sm:text-2xl">table_rows</span>
           </div>
-          <div className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">
+          <div className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">
             {stats.totalRows.toLocaleString()}
           </div>
-          <p className="text-[12px] text-green-600 mt-2 font-medium">100% Parsed</p>
+          <p className="text-[11px] sm:text-[12px] text-green-600 mt-1 sm:mt-2 font-medium">100% Parsed</p>
         </div>
 
         {/* Columns */}
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[#64748B] text-xs font-medium">Total Columns</span>
-            <span className="material-symbols-outlined text-[#06B6D4]">view_column</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium">Total Columns</span>
+            <span className="material-symbols-outlined text-[#06B6D4] text-lg sm:text-2xl">view_column</span>
           </div>
-          <div className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">{stats.totalCols}</div>
-          <p className="text-[12px] text-[#64748B] mt-2">{stats.numericColCount} Numeric, {stats.categoricalColCount} Text</p>
+          <div className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">{stats.totalCols}</div>
+          <p className="text-[11px] sm:text-[12px] text-[#64748B] mt-1 sm:mt-2 truncate">{stats.numericColCount} Num, {stats.categoricalColCount} Text</p>
         </div>
 
         {/* Missing Data */}
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[#64748B] text-xs font-medium">Missing Data %</span>
-            <span className="material-symbols-outlined text-amber-500">warning</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium">Missing Data %</span>
+            <span className="material-symbols-outlined text-amber-500 text-lg sm:text-2xl">warning</span>
           </div>
-          <div className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">{stats.nullRatioPct}%</div>
-          <p className="text-[12px] text-green-600 mt-2 font-medium">Data Integrity Check</p>
+          <div className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">{stats.nullRatioPct}%</div>
+          <p className="text-[11px] sm:text-[12px] text-green-600 mt-1 sm:mt-2 font-medium">Integrity Check</p>
         </div>
 
         {/* Format & Size */}
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[#64748B] text-xs font-medium">Format & Size</span>
-            <span className="material-symbols-outlined text-purple-600">folder_zip</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium">Format & Size</span>
+            <span className="material-symbols-outlined text-purple-600 text-lg sm:text-2xl">folder_zip</span>
           </div>
-          <div className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">{stats.fileType}</div>
-          <p className="text-[12px] text-[#64748B] mt-2">{stats.fileSizeKB} KB in memory</p>
+          <div className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">{stats.fileType}</div>
+          <p className="text-[11px] sm:text-[12px] text-[#64748B] mt-1 sm:mt-2">{stats.fileSizeKB} KB memory</p>
         </div>
 
         {/* Engine Speed */}
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[#64748B] text-xs font-medium">Engine Speed</span>
-            <span className="material-symbols-outlined text-emerald-600">bolt</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0] col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium">Engine Speed</span>
+            <span className="material-symbols-outlined text-emerald-600 text-lg sm:text-2xl">bolt</span>
           </div>
-          <div className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">~120 ms</div>
-          <p className="text-[12px] text-emerald-600 mt-2 font-semibold">In-memory Engine</p>
+          <div className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">~120 ms</div>
+          <p className="text-[11px] sm:text-[12px] text-emerald-600 mt-1 sm:mt-2 font-semibold">In-memory Engine</p>
         </div>
       </section>
 
       {/* Main Charts Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Column Means & Max Breakdown */}
-        <div className="bg-white p-6 rounded-2xl shadow-xs border border-[#E2E8F0] lg:col-span-2">
-          <div className="flex justify-between items-start mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xs border border-[#E2E8F0] lg:col-span-2">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
             <div>
-              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A]">
+              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-[#0F172A]">
                 Numeric Features Statistics Overview
               </h3>
               <p className="text-xs text-[#64748B]">Comparing Means & Maximums across dataset columns</p>
@@ -223,7 +223,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span className="material-symbols-outlined text-[#64748B]">bar_chart</span>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-56 sm:h-64 w-full">
             {barChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barChartData}>
@@ -244,10 +244,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Feature Distribution Donut */}
-        <div className="bg-white p-6 rounded-2xl shadow-xs border border-[#E2E8F0]">
-          <div className="flex justify-between items-start mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xs border border-[#E2E8F0]">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
             <div>
-              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A]">
+              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-[#0F172A]">
                 Column Types Breakdown
               </h3>
               <p className="text-xs text-[#64748B]">Numeric vs Categorical</p>
@@ -255,7 +255,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span className="material-symbols-outlined text-[#64748B]">donut_large</span>
           </div>
 
-          <div className="h-52 w-full flex items-center justify-center">
+          <div className="h-48 sm:h-52 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -276,13 +276,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </ResponsiveContainer>
           </div>
 
-          <div className="flex justify-center gap-6 mt-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#004ac6]"></span>
+          <div className="flex justify-center gap-4 sm:gap-6 mt-2 text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#004ac6]"></span>
               <span>Numeric ({stats.numericColCount})</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#06B6D4]"></span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#06B6D4]"></span>
               <span>Text/Dates ({stats.categoricalColCount})</span>
             </div>
           </div>
@@ -291,23 +291,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* Numeric Summaries Detailed Table */}
       {numericCols.length > 0 && (
-        <section className="mt-8 bg-white rounded-2xl shadow-xs border border-[#E2E8F0] p-6">
-          <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A] mb-4">
+        <section className="mt-6 sm:mt-8 bg-white rounded-2xl shadow-xs border border-[#E2E8F0] p-4 sm:p-6">
+          <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-[#0F172A] mb-3 sm:mb-4">
             Detailed Statistical Summary Matrix (5-Number Summary)
           </h3>
 
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="overflow-x-auto touch-scroll custom-scrollbar">
+            <table className="w-full text-left border-collapse text-xs min-w-[600px]">
               <thead>
                 <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-semibold">
-                  <th className="p-3">Column Name</th>
-                  <th className="p-3 text-right">Mean</th>
-                  <th className="p-3 text-right">Std Dev</th>
-                  <th className="p-3 text-right">Min</th>
-                  <th className="p-3 text-right">25th %</th>
-                  <th className="p-3 text-right">Median</th>
-                  <th className="p-3 text-right">75th %</th>
-                  <th className="p-3 text-right">Max</th>
+                  <th className="p-2.5 sm:p-3">Column Name</th>
+                  <th className="p-2.5 sm:p-3 text-right">Mean</th>
+                  <th className="p-2.5 sm:p-3 text-right">Std Dev</th>
+                  <th className="p-2.5 sm:p-3 text-right">Min</th>
+                  <th className="p-2.5 sm:p-3 text-right">25th %</th>
+                  <th className="p-2.5 sm:p-3 text-right">Median</th>
+                  <th className="p-2.5 sm:p-3 text-right">75th %</th>
+                  <th className="p-2.5 sm:p-3 text-right">Max</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0]">
@@ -315,14 +315,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   const s = stats.numericSummaries[colName];
                   return (
                     <tr key={colName} className="hover:bg-[#F8FAFC]">
-                      <td className="p-3 font-semibold text-[#0F172A]">{colName}</td>
-                      <td className="p-3 text-right font-mono">{s.mean.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono text-slate-500">{s.std.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono">{s.min.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono text-slate-500">{s.p25.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono font-semibold text-[#004ac6]">{s.median.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono text-slate-500">{s.p75.toLocaleString()}</td>
-                      <td className="p-3 text-right font-mono">{s.max.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 font-semibold text-[#0F172A]">{colName}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono">{s.mean.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono text-slate-500">{s.std.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono">{s.min.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono text-slate-500">{s.p25.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono font-semibold text-[#004ac6]">{s.median.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono text-slate-500">{s.p75.toLocaleString()}</td>
+                      <td className="p-2.5 sm:p-3 text-right font-mono">{s.max.toLocaleString()}</td>
                     </tr>
                   );
                 })}
@@ -333,13 +333,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       )}
 
       {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-[#E2E8F0]">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#64748B]">
+      <footer className="mt-8 sm:mt-12 py-4 sm:py-6 border-t border-[#E2E8F0]">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs text-[#64748B] text-center md:text-left">
           <div>
             <p className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-[#0F172A]">DataSage AI</p>
             <p className="mt-0.5">© 2026 DataSage AI. Natural Language Spreadsheet Intelligence.</p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-4 sm:gap-6">
             <a className="hover:text-[#004ac6] transition-colors" href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
             <a className="hover:text-[#004ac6] transition-colors" href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
             <a className="hover:text-[#004ac6] transition-colors" href="#" onClick={(e) => e.preventDefault()}>Security</a>

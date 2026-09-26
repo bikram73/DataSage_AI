@@ -98,3 +98,17 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #737686;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch-friendly momentum scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+}

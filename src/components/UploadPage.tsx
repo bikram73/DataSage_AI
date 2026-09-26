@@ -137,10 +137,10 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div id="upload-page" className="w-full p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-[#F8FAFC]">
+    <div id="upload-page" className="w-full p-3 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-[#F8FAFC]">
       {/* Header Section */}
-      <div className="max-w-3xl w-full mb-6 text-center">
-        <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-bold text-[#0F172A] mb-1">
+      <div className="max-w-3xl w-full mb-4 sm:mb-6 text-center px-2">
+        <h2 className="font-['Plus_Jakarta_Sans'] text-xl sm:text-2xl md:text-3xl font-bold text-[#0F172A] mb-1">
           Import Spreadsheet Dataset
         </h2>
         <p className="text-xs sm:text-sm text-[#64748B]">
@@ -149,18 +149,18 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* Centered Upload Container */}
-      <div className="max-w-3xl w-full bg-white shadow-xs rounded-[18px] p-6 sm:p-8 border border-[#E2E8F0] flex flex-col gap-6">
+      <div className="max-w-3xl w-full bg-white shadow-xs rounded-2xl sm:rounded-[18px] p-4 sm:p-6 md:p-8 border border-[#E2E8F0] flex flex-col gap-4 sm:gap-6">
         
         {/* Error Banner */}
         {uploadState === 'error' && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center justify-between">
+          <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs sm:text-sm flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-red-600">error</span>
+              <span className="material-symbols-outlined text-red-600 text-[18px] sm:text-[20px]">error</span>
               <span>{errorMessage}</span>
             </div>
             <button
               onClick={() => setUploadState('idle')}
-              className="text-xs underline font-semibold text-red-800 hover:text-red-900"
+              className="text-xs underline font-semibold text-red-800 hover:text-red-900 ml-2"
             >
               Try Again
             </button>
@@ -175,7 +175,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
               onClick={() => fileInputRef.current?.click()}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-2xl bg-[#F8FAFC] hover:border-[#004ac6] hover:bg-[#004ac6]/5 transition-all duration-300 p-8 sm:p-10 flex flex-col items-center justify-center text-center"
+              className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-2xl bg-[#F8FAFC] hover:border-[#004ac6] hover:bg-[#004ac6]/5 transition-all duration-300 p-6 sm:p-10 flex flex-col items-center justify-center text-center"
             >
               <input
                 ref={fileInputRef}
@@ -184,11 +184,11 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <div className="w-16 h-16 rounded-2xl bg-[#004ac6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[#004ac6] text-4xl">upload_file</span>
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#004ac6]/10 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[#004ac6] text-3xl sm:text-4xl">upload_file</span>
               </div>
-              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-lg text-[#0F172A] mb-1">
-                Click to upload or drag and drop spreadsheet
+              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base sm:text-lg text-[#0F172A] mb-1">
+                Click to upload or drag & drop spreadsheet
               </h3>
               <p className="text-xs sm:text-sm text-[#64748B]">
                 Supported formats: CSV, XLS, XLSX (Max 100MB)
@@ -196,38 +196,38 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Quick Sample File Download Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl">
               <div className="flex items-center gap-1.5 text-xs text-[#0F172A] font-medium">
                 <span className="material-symbols-outlined text-[#004ac6] text-base">download_for_offline</span>
-                <span>Download sample spreadsheets to your computer:</span>
+                <span>Sample datasets for offline test:</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => downloadSampleCSV('sales_data')}
-                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs min-h-[32px]"
                   title="Download Sales_Report.csv (1,000 rows)"
                 >
                   <span className="material-symbols-outlined text-xs">download</span>
-                  <span>Sales_Report.csv</span>
+                  <span>Sales.csv</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => downloadSampleCSV('hr_analytics')}
-                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs min-h-[32px]"
                   title="Download HR_Employee_Analytics.csv (500 rows)"
                 >
                   <span className="material-symbols-outlined text-xs">download</span>
-                  <span>HR_Analytics.csv</span>
+                  <span>HR.csv</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => downloadSampleCSV('marketing_campaigns')}
-                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs min-h-[32px]"
                   title="Download Marketing_Campaign_ROI.csv (350 rows)"
                 >
                   <span className="material-symbols-outlined text-xs">download</span>
-                  <span>Marketing_ROI.csv</span>
+                  <span>Marketing.csv</span>
                 </button>
               </div>
             </div>
@@ -236,11 +236,11 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
 
         {/* Uploading Progress State */}
         {uploadState === 'uploading' && (
-          <div id="uploading-state" className="flex flex-col gap-4 p-6 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
+          <div id="uploading-state" className="flex flex-col gap-4 p-5 sm:p-6 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#004ac6] animate-spin">sync</span>
-                <span className="text-sm font-medium text-[#0F172A]">Parsing and analyzing spreadsheet columns...</span>
+                <span className="text-xs sm:text-sm font-medium text-[#0F172A]">Parsing spreadsheet columns...</span>
               </div>
               <span className="text-xs font-semibold text-[#004ac6]">{progress}%</span>
             </div>
@@ -258,9 +258,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
         {uploadState === 'success' && activeDatasetInfo && (
           <div className="flex flex-col gap-4">
             {/* Validation Banner */}
-            <div id="validation-success" className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
+            <div id="validation-success" className="flex items-center gap-2.5 p-3.5 sm:p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
               <span className="material-symbols-outlined text-green-600">check_circle</span>
-              <span className="text-sm font-medium">Dataset active and ready for analysis!</span>
+              <span className="text-xs sm:text-sm font-medium">Dataset active and ready for analysis!</span>
             </div>
 
             {/* File Info Card */}
@@ -270,35 +270,35 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={handleRemoveActiveDataset}
-                    className="text-red-600 hover:text-red-700 text-xs font-semibold flex items-center gap-1 hover:underline"
+                    className="text-red-600 hover:text-red-700 text-xs font-semibold flex items-center gap-1 hover:underline min-h-[36px]"
                   >
                     <span className="material-symbols-outlined text-sm">delete_outline</span> Remove
                   </button>
                   <button 
                     onClick={() => setUploadState('idle')}
-                    className="text-[#004ac6] hover:underline text-xs font-semibold flex items-center gap-1"
+                    className="text-[#004ac6] hover:underline text-xs font-semibold flex items-center gap-1 min-h-[36px]"
                   >
                     <span className="material-symbols-outlined text-sm">upload</span> Upload New
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-1">
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#64748B]">Dataset Name</span>
-                  <span className="text-sm font-semibold text-[#0F172A] truncate">{activeDatasetInfo.name}</span>
+                  <span className="text-[11px] sm:text-xs text-[#64748B]">Dataset Name</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#0F172A] truncate" title={activeDatasetInfo.name}>{activeDatasetInfo.name}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#64748B]">Rows</span>
-                  <span className="text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.rowCount.toLocaleString()}</span>
+                  <span className="text-[11px] sm:text-xs text-[#64748B]">Rows</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.rowCount.toLocaleString()}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#64748B]">Columns</span>
-                  <span className="text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.columnCount}</span>
+                  <span className="text-[11px] sm:text-xs text-[#64748B]">Columns</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.columnCount}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#64748B]">Format & Size</span>
-                  <span className="text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.fileType} ({activeDatasetInfo.fileSizeKB} KB)</span>
+                  <span className="text-[11px] sm:text-xs text-[#64748B]">Format & Size</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#0F172A]">{activeDatasetInfo.fileType} ({activeDatasetInfo.fileSizeKB} KB)</span>
                 </div>
               </div>
 
@@ -323,24 +323,24 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* CTA Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 sm:gap-3 mt-1 sm:mt-2">
               <button
                 onClick={() => onNavigate('preview')}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-medium border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
               >
                 <span className="material-symbols-outlined text-sm">table_chart</span>
                 <span>View Dataset Preview</span>
               </button>
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-medium border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
               >
                 <span className="material-symbols-outlined text-sm">insights</span>
                 <span>View Dashboard</span>
               </button>
               <button
                 onClick={() => onNavigate('workspace')}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#004ac6] text-white shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#004ac6] text-white shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <span className="material-symbols-outlined text-sm">auto_awesome</span>
                 <span>Ask AI Questions</span>
@@ -351,23 +351,23 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
 
         {/* Sample Datasets */}
         <div id="recent-datasets" className="border-t border-[#E2E8F0] pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h5 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm text-[#0F172A]">Or Try Ready-To-Use Sample Datasets</h5>
-            <span className="text-[#64748B] text-xs">Pre-loaded with 1,000+ records</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
+            <h5 className="font-['Plus_Jakarta_Sans'] font-semibold text-xs sm:text-sm text-[#0F172A]">Or Try Ready-To-Use Sample Datasets</h5>
+            <span className="text-[#64748B] text-[11px] sm:text-xs">Pre-loaded with 1,000+ records</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {sampleDatasets.map((sample) => (
               <div
                 key={sample.id}
                 onClick={() => handleSelectSample(sample.id)}
-                className={`p-4 bg-white border border-[#CBD5E1]/70 rounded-2xl flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all cursor-pointer ${
+                className={`p-3.5 sm:p-4 bg-white border border-[#CBD5E1]/70 rounded-2xl flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all cursor-pointer ${
                   loadingSample === sample.id ? 'opacity-60 pointer-events-none' : ''
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold text-[#0F172A] truncate">{sample.name}</span>
+                    <span className="text-xs font-semibold text-[#0F172A] truncate" title={sample.name}>{sample.name}</span>
                     <span className="text-[10px] font-bold bg-blue-50 text-[#004ac6] px-1.5 py-0.5 rounded">{sample.fileType}</span>
                   </div>
                   <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed mb-3">{sample.description}</p>
@@ -399,9 +399,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 max-w-3xl w-full flex flex-col md:flex-row justify-between items-center text-[#64748B] text-xs">
+      <footer className="mt-6 sm:mt-8 max-w-3xl w-full flex flex-col sm:flex-row justify-between items-center text-[#64748B] text-xs gap-3 text-center sm:text-left px-2">
         <span>© 2026 DataSage AI. Natural Language Spreadsheet Analytics.</span>
-        <div className="flex items-center gap-4 mt-2 md:mt-0">
+        <div className="flex items-center gap-4">
           <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">Documentation</a>
           <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">In-Memory Engine</a>
           <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">Privacy</a>

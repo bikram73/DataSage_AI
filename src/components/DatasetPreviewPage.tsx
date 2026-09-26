@@ -145,45 +145,45 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
   return (
     <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] flex flex-col bg-[#F8FAFC] text-[#0F172A]">
       {/* Sticky Header */}
-      <header id="preview-header" className="bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <nav className="flex items-center text-[#64748B] text-xs font-medium">
-            <span className="cursor-pointer hover:text-[#004ac6]" onClick={() => onNavigate('upload')}>Datasets</span>
-            <span className="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
-            <span className="text-[#0F172A] font-semibold truncate max-w-[150px] sm:max-w-xs">{previewData.name}</span>
+      <header id="preview-header" className="bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] px-3 sm:px-6 md:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <nav className="flex items-center text-[#64748B] text-xs font-medium min-w-0">
+            <span className="cursor-pointer hover:text-[#004ac6] shrink-0" onClick={() => onNavigate('upload')}>Datasets</span>
+            <span className="material-symbols-outlined text-[16px] mx-1 shrink-0">chevron_right</span>
+            <span className="text-[#0F172A] font-semibold truncate max-w-[110px] sm:max-w-xs">{previewData.name}</span>
           </nav>
-          <span className="text-xs bg-blue-50 text-[#004ac6] font-semibold px-2 py-0.5 rounded-full border border-blue-100 hidden sm:inline">
+          <span className="text-xs bg-blue-50 text-[#004ac6] font-semibold px-2 py-0.5 rounded-full border border-blue-100 hidden sm:inline shrink-0">
             {previewData.rowCount.toLocaleString()} rows
           </span>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Remove / Clear Dataset button */}
           <button
             onClick={handleRemoveDataset}
             disabled={isRemoving}
             title="Remove and empty this dataset"
-            className="bg-white border border-red-200 text-red-600 font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1 sm:gap-1.5"
+            className="bg-white border border-red-200 text-red-600 font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1 sm:gap-1.5 min-h-[38px]"
           >
             <span className="material-symbols-outlined text-[18px]">delete_outline</span>
             <span className="hidden sm:inline">Remove Dataset</span>
-            <span className="sm:hidden">Remove</span>
+            <span className="sm:hidden text-[11px]">Remove</span>
           </button>
 
           <button 
             id="preview-export-btn"
             onClick={exportCSV}
-            className="bg-white border border-[#CBD5E1] text-[#0F172A] font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-[#F1F5F9] transition-colors flex items-center gap-1 sm:gap-1.5"
+            className="bg-white border border-[#CBD5E1] text-[#0F172A] font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-[#F1F5F9] transition-colors flex items-center gap-1 sm:gap-1.5 min-h-[38px]"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
             <span className="hidden sm:inline">Export CSV</span>
-            <span className="sm:hidden">CSV</span>
+            <span className="sm:hidden text-[11px]">CSV</span>
           </button>
 
           <button 
             id="preview-run-analysis-btn"
             onClick={() => onNavigate('workspace')}
-            className="bg-[#004ac6] text-white font-semibold text-xs px-3 sm:px-4 py-2 rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-1 sm:gap-1.5"
+            className="bg-[#004ac6] text-white font-semibold text-xs px-3 sm:px-4 py-2 rounded-xl shadow-xs hover:brightness-110 active:scale-95 transition-all flex items-center gap-1 sm:gap-1.5 min-h-[38px]"
           >
             <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
             <span>Ask AI</span>
@@ -192,89 +192,89 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
       </header>
 
       {/* Main Container */}
-      <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-6 max-w-[1440px] mx-auto w-full">
+      <div className="p-3 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6 max-w-[1440px] mx-auto w-full">
         {/* Statistics Bento Grid */}
-        <section id="preview-stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <section id="preview-stats-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {/* Rows */}
-          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-            <div className="flex justify-between items-start mb-2">
-              <span className="p-2 bg-[#004ac6]/10 rounded-lg text-[#004ac6] material-symbols-outlined">reorder</span>
-              <span className="text-green-600 bg-green-50 text-[10px] font-bold px-2 py-0.5 rounded-full">{previewData.fileType}</span>
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+              <span className="p-1.5 sm:p-2 bg-[#004ac6]/10 rounded-lg text-[#004ac6] material-symbols-outlined text-lg sm:text-2xl">reorder</span>
+              <span className="text-green-600 bg-green-50 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{previewData.fileType}</span>
             </div>
-            <p className="text-[#64748B] text-xs font-medium">Total Records</p>
-            <h3 className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">{previewData.rowCount.toLocaleString()}</h3>
+            <p className="text-[#64748B] text-[11px] sm:text-xs font-medium">Total Records</p>
+            <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">{previewData.rowCount.toLocaleString()}</h3>
           </div>
 
           {/* Columns */}
-          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-            <div className="flex justify-between items-start mb-2">
-              <span className="p-2 bg-cyan-100 rounded-lg text-[#06B6D4] material-symbols-outlined">view_column</span>
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+              <span className="p-1.5 sm:p-2 bg-cyan-100 rounded-lg text-[#06B6D4] material-symbols-outlined text-lg sm:text-2xl">view_column</span>
             </div>
-            <p className="text-[#64748B] text-xs font-medium">Total Columns</p>
-            <h3 className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">{previewData.columnCount}</h3>
+            <p className="text-[#64748B] text-[11px] sm:text-xs font-medium">Total Columns</p>
+            <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">{previewData.columnCount}</h3>
           </div>
 
           {/* Numeric Columns */}
-          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-            <div className="flex justify-between items-start mb-2">
-              <span className="p-2 bg-purple-100 rounded-lg text-purple-700 material-symbols-outlined">numbers</span>
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+              <span className="p-1.5 sm:p-2 bg-purple-100 rounded-lg text-purple-700 material-symbols-outlined text-lg sm:text-2xl">numbers</span>
             </div>
-            <p className="text-[#64748B] text-xs font-medium">Numeric Columns</p>
-            <h3 className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">
+            <p className="text-[#64748B] text-[11px] sm:text-xs font-medium">Numeric Columns</p>
+            <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">
               {columns.filter((c) => c.type === 'Float' || c.type === 'Integer').length}
             </h3>
           </div>
 
           {/* Categorical Columns */}
-          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
-            <div className="flex justify-between items-start mb-2">
-              <span className="p-2 bg-amber-100 rounded-lg text-amber-700 material-symbols-outlined">category</span>
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
+            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+              <span className="p-1.5 sm:p-2 bg-amber-100 rounded-lg text-amber-700 material-symbols-outlined text-lg sm:text-2xl">category</span>
             </div>
-            <p className="text-[#64748B] text-xs font-medium">Categorical Columns</p>
-            <h3 className="font-['Plus_Jakarta_Sans'] text-2xl font-bold text-[#0F172A]">
+            <p className="text-[#64748B] text-[11px] sm:text-xs font-medium">Categorical Columns</p>
+            <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-bold text-[#0F172A]">
               {columns.filter((c) => c.type === 'String' || c.type === 'Date').length}
             </h3>
           </div>
         </section>
 
         {/* Table Controls */}
-        <section className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:w-96">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none">search</span>
+        <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80 md:w-96">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none text-lg">search</span>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search dataset cells..."
-              className="w-full bg-white border border-[#CBD5E1] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 transition-all"
+              className="w-full bg-white border border-[#CBD5E1] rounded-xl py-2 pl-9 pr-4 text-xs sm:text-sm focus:outline-none focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <span className="text-[#64748B] text-xs font-medium whitespace-nowrap">
-              Showing preview of {filteredRows.length} rows out of {previewData.rowCount.toLocaleString()}
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <span className="text-[#64748B] text-[11px] sm:text-xs font-medium whitespace-nowrap">
+              Showing preview of {filteredRows.length} / {previewData.rowCount.toLocaleString()} rows
             </span>
           </div>
         </section>
 
         {/* Main Data Table */}
-        <section className="bg-white rounded-[18px] shadow-xs border border-[#E2E8F0] overflow-hidden flex flex-col">
-          <div className="overflow-x-auto custom-scrollbar max-h-[500px]">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+        <section className="bg-white rounded-2xl sm:rounded-[18px] shadow-xs border border-[#E2E8F0] overflow-hidden flex flex-col">
+          <div className="overflow-x-auto touch-scroll custom-scrollbar max-h-[500px]">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B]">
-                  <th className="p-4 w-12 sticky left-0 bg-[#F8FAFC] z-10">
+                  <th className="p-3 sm:p-4 w-12 sticky left-0 bg-[#F8FAFC] z-10">
                     <input 
                       type="checkbox" 
                       onChange={(e) => {
                         if (e.target.checked) setSelectedRows(rows.map((_, i) => i));
                         else setSelectedRows([]);
                       }}
-                      className="rounded border-[#CBD5E1] text-[#004ac6]"
+                      className="rounded border-[#CBD5E1] text-[#004ac6] w-4 h-4"
                     />
                   </th>
                   {columns.map((col, idx) => (
-                    <th key={idx} className="p-4 whitespace-nowrap">
+                    <th key={idx} className="p-3 sm:p-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <span>{col.name}</span>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
@@ -289,7 +289,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-[#E2E8F0] text-sm">
+              <tbody className="divide-y divide-[#E2E8F0] text-xs sm:text-sm">
                 {filteredRows.map((row, rIdx) => (
                   <tr
                     key={rIdx}
@@ -298,16 +298,16 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
                       selectedRows.includes(rIdx) ? 'bg-[#004ac6]/5' : ''
                     }`}
                   >
-                    <td className="p-4 sticky left-0 bg-white z-10">
+                    <td className="p-3 sm:p-4 sticky left-0 bg-white z-10">
                       <input
                         type="checkbox"
                         checked={selectedRows.includes(rIdx)}
                         onChange={() => toggleSelectRow(rIdx)}
-                        className="rounded border-[#CBD5E1] text-[#004ac6]"
+                        className="rounded border-[#CBD5E1] text-[#004ac6] w-4 h-4"
                       />
                     </td>
                     {columns.map((col, cIdx) => (
-                      <td key={cIdx} className="p-4 text-[#0F172A]">
+                      <td key={cIdx} className="p-3 sm:p-4 text-[#0F172A] whitespace-nowrap">
                         {row[col.name] !== undefined && row[col.name] !== null
                           ? typeof row[col.name] === 'number'
                             ? row[col.name].toLocaleString()
