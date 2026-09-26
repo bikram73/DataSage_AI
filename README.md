@@ -11,8 +11,9 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Express](https://img.shields.io/badge/Express-4.21-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![Gemini API](https://img.shields.io/badge/Google_Gemini-3.6_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
+[![Test Suite](https://img.shields.io/badge/Test_Suite-52%20Passed%20%2F%200%20Failed-success?style=for-the-badge&logo=checkmarx&logoColor=white)](./TEST_REPORT.md)
 
-**An end-to-end intelligent data analytics workspace that transforms raw tabular spreadsheets (CSV, XLSX, XLS) into conversational insights, deterministic Pandas computations, statistical distributions, and interactive Recharts visualizations.**
+**An end-to-end intelligent data analytics workspace that transforms raw tabular spreadsheets (CSV, XLSX, XLS) into conversational insights, deterministic computations, statistical distributions, and interactive Recharts visualizations.**
 
 🔗 **Live Application**: [https://data-sage-ai.netlify.app/](https://data-sage-ai.netlify.app/)  
 📦 **Source Code Repository**: [https://github.com/bikram73/DataSage_AI](https://github.com/bikram73/DataSage_AI)
@@ -35,7 +36,7 @@
 | <div align="center">**View the available REST API endpoints and usage examples.** 👉</div> | <div align="center"><a href="#api"><img src="https://img.shields.io/badge/🌐%20API%20Documentation-0EA5E9?style=for-the-badge" /></a></div> |
 | <div align="center">**Explore the complete system architecture, AI workflow, processing pipeline, data flow, deployment design, and technical decisions.** 👉</div> | <div align="center"><a href="./ARCHITECTURE.md"><img src="https://img.shields.io/badge/🏗️%20Architecture%20Document-DC2626?style=for-the-badge" /></a></div> |
 | <div align="center">**Review implementation details, AI pipeline, performance metrics, benchmarking, validation strategy, privacy, testing, and technical specifications.** 👉</div> | <div align="center"><a href="./TECHNICAL_REPORT.md"><img src="https://img.shields.io/badge/📊%20Technical%20Report-2563EB?style=for-the-badge" /></a></div> |
-| <div align="center">**Review complete automated test results, 205 test assertions, QA matrix, and quality gate statement.** 👉</div> | <div align="center"><a href="./TEST_REPORT.md"><img src="https://img.shields.io/badge/🧪%20Test%20Report-10B981?style=for-the-badge" /></a></div> |
+| <div align="center">**Review verified automated test results, API integration tests, QA matrix, and quality gate statement.** 👉</div> | <div align="center"><a href="./TEST_REPORT.md"><img src="https://img.shields.io/badge/🧪%20Test%20Report-10B981?style=for-the-badge" /></a></div> |
 | <div align="center">**Review processing speed, latency, and performance benchmarks.** 👉</div> | <div align="center"><a href="#performance"><img src="https://img.shields.io/badge/⚡%20Performance-F59E0B?style=for-the-badge" /></a></div> |
 | <div align="center">**Understand the current limitations and known failure cases of the AI extractor.** 👉</div> | <div align="center"><a href="#limitations"><img src="https://img.shields.io/badge/⚠️%20Known%20Limitations-EF4444?style=for-the-badge" /></a></div> |
 
@@ -47,9 +48,9 @@
 ## ✨ 1. Key Features & Capabilities
 
 ### 💬 Conversational Spreadsheet Q&A (Natural Language Interface)
-- **Zero Hallucination Architecture**: Questions are translated into deterministic Python Pandas queries and executed directly against in-memory dataset records.
+- **Zero Hallucination Architecture**: Questions are translated into structured query plans with reproducible Python Pandas syntax for auditability and executed deterministically on dataset records.
 - **Synthesized Answers & Calculation Steps**: Every answer includes the exact aggregation logic, code execution trace, and elapsed computation milliseconds.
-- **Dynamic Chart Generation**: Automatically detects query intent to produce Bar charts, Area/Line trends, and Category breakdown charts.
+- **Dynamic Chart Generation**: Automatically detects query intent to produce Bar charts, Area/Line trends, Scatter plots, and Category breakdown charts.
 - **Contextual Follow-Up Suggestions**: Generates 3 intelligent subsequent questions tailored to dataset insights.
 
 ### 📥 Universal Ingestion & Sample Generator
@@ -66,7 +67,7 @@
 ### 📈 Instant Statistical Analytics Dashboard
 - **Auto-Calculated KPI Cards**: Total Records, Column Count, Data Completeness Score, and Top Feature Cardinality.
 - **Distribution Histograms & Top Category Frequency**: Automatically generates charts for dominant metrics and dimensions.
-- **5-Number Summary Matrix**: Computes Mean, Median, Min, Max, and Standard Deviation for all continuous numerical features.
+- **5-Number Summary Matrix**: Computes Mean, Median, Min, Max, and Standard Deviation for all continuous numerical features with null-safe filtering.
 
 ---
 
@@ -195,6 +196,12 @@ $$\text{Confidence Score} = w_s \cdot S_{\text{schema}} + w_t \cdot S_{\text{typ
 <a name="api"></a>
 ## 🌐 6. REST API Documentation
 
+### `GET /api/health`
+Returns service health and active dataset status.
+```bash
+curl http://localhost:3000/api/health
+```
+
 ### `POST /api/upload`
 Uploads raw spreadsheet rows or activates an existing sample dataset.
 ```bash
@@ -203,18 +210,32 @@ curl -X POST http://localhost:3000/api/upload \
   -d '{"datasetId": "sales_data"}'
 ```
 
+### `GET /api/preview`
+Returns active dataset metadata and first 100 sample records.
+```bash
+curl http://localhost:3000/api/preview
+```
+
+### `GET /api/statistics`
+Returns computed statistics, 5-number summaries, and null ratios.
+```bash
+curl http://localhost:3000/api/statistics
+```
+
 ### `POST /api/query`
-Executes a natural language question against the active dataset.
+Executes a natural language analytical question against the active dataset.
 ```bash
 curl -X POST http://localhost:3000/api/query \
   -H "Content-Type: application/json" \
   -d '{"question": "What is the total revenue by region?"}'
 ```
 
-### `GET /api/statistics`
-Returns computed statistics, missing value ratios, and distributions.
+### `POST /api/chart`
+Dynamically aggregates metrics by specified axes and aggregation mode (`sum`, `mean`, `count`, `min`, `max`).
 ```bash
-curl http://localhost:3000/api/statistics
+curl -X POST http://localhost:3000/api/chart \
+  -H "Content-Type: application/json" \
+  -d '{"chartType": "bar", "xAxis": "Region", "yAxis": "Sales", "aggregation": "sum"}'
 ```
 
 ### `POST /api/clear`

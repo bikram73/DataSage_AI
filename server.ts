@@ -4,7 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import { SAMPLE_DATASETS, DatasetMetadata } from "./src/data/sampleDatasets";
-import { analyzeRawDataset, executeDatasetAnalysis, computeDatasetStatistics } from "./src/server/analyticsEngine";
+import { analyzeRawDataset, executeDatasetAnalysis, computeDatasetStatistics, parseNumericValue } from "./src/server/analyticsEngine";
 
 dotenv.config();
 
@@ -222,31 +222,70 @@ Formulate a Python Pandas calculation strategy. Respond in JSON with:
 // POST /api/chart
 app.post("/api/chart", (req, res) => {
   try {
-    const { chartType, xAxis, yAxis, aggregation } = req.body;
-    const rows = activeDataset.rows;
+    if (!activeDataset) {
+      return res.status(400).json({ error: "No active dataset loaded. Please upload a dataset first." });
+    }
 
-    const groupMap: Record<string, { sum: number; count: number; mean: number }> = {};
+    const { chartType = 'bar', xAxis, yAxis, aggregation = 'sum' } = req.body;
+
+    if (!xAxis || !yAxis) {
+      return res.status(400).json({ error: "Both xAxis and yAxis parameters are required" });
+    }
+
+    const availableCols = activeDataset.columns.map((c) => c.name);
+    if (!availableCols.includes(xAxis) || !availableCols.includes(yAxis)) {
+      return res.status(400).json({
+        error: `Invalid axis columns. Available columns: ${availableCols.join(", ")}`
+      });
+    }
+
+    const validAggregations = ['sum', 'mean', 'count', 'min', 'max'];
+    if (!validAggregations.includes(aggregation)) {
+      return res.status(400).json({
+        error: `Unsupported aggregation '${aggregation}'. Supported: ${validAggregations.join(', ')}`
+      });
+    }
+
+    const rows = activeDataset.rows;
+    const groupMap: Record<string, { sum: number; count: number; min: number; max: number }> = {};
+
     rows.forEach((r) => {
-      const gKey = String(r[xAxis] || 'Other');
-      const val = Number(r[yAxis]) || 0;
-      if (!groupMap[gKey]) groupMap[gKey] = { sum: 0, count: 0, mean: 0 };
+      const gKey = String(r[xAxis] ?? 'Other');
+      const val = parseNumericValue(r[yAxis]);
+      if (val === null) return;
+
+      if (!groupMap[gKey]) {
+        groupMap[gKey] = { sum: 0, count: 0, min: val, max: val };
+      }
       groupMap[gKey].sum += val;
       groupMap[gKey].count += 1;
+      groupMap[gKey].min = Math.min(groupMap[gKey].min, val);
+      groupMap[gKey].max = Math.max(groupMap[gKey].max, val);
     });
 
-    const data = Object.entries(groupMap).map(([k, stats]) => ({
-      name: k,
-      value: Math.round(aggregation === 'mean' ? stats.sum / stats.count : stats.sum),
-      count: stats.count
-    }));
+    const data = Object.entries(groupMap).map(([k, stats]) => {
+      let finalVal = stats.sum;
+      if (aggregation === 'mean') finalVal = stats.count > 0 ? stats.sum / stats.count : 0;
+      else if (aggregation === 'count') finalVal = stats.count;
+      else if (aggregation === 'min') finalVal = stats.min;
+      else if (aggregation === 'max') finalVal = stats.max;
+
+      return {
+        name: k,
+        value: parseFloat(finalVal.toFixed(2)),
+        count: stats.count
+      };
+    });
 
     res.json({
-      chartType: chartType || 'bar',
+      chartType,
       xAxis,
       yAxis,
+      aggregation,
       data
     });
   } catch (err: any) {
+    console.error("Error in /api/chart:", err);
     res.status(500).json({ error: err.message || "Chart generation failed" });
   }
 });
@@ -266,9 +305,24 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`DataSage AI Server running on http://0.0.0.0:${PORT}`);
+  return new Promise((resolve) => {
+    const srv = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`DataSage AI Server running on http://0.0.0.0:${PORT}`);
+      resolve(srv);
+    });
   });
 }
 
-startServer();
+// Autostart server only when executed as the main entrypoint
+const isMainModule = Boolean(
+  process.argv[1] &&
+  (process.argv[1].endsWith("server.ts") ||
+   process.argv[1].endsWith("server.cjs") ||
+   process.argv[1].endsWith("server.js"))
+);
+
+if (isMainModule && process.env.NODE_ENV !== "test") {
+  startServer();
+}
+
+export { app, startServer, activeDataset };

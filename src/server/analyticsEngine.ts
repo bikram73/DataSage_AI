@@ -152,14 +152,36 @@ export function analyzeRawDataset(
 }
 
 /**
- * Helper to safely extract numeric value from row cell
+ * Helper to safely extract numeric value or null from row cell
  */
-export function getNumericValue(val: any): number {
-  if (val === null || val === undefined || val === '') return 0;
-  if (typeof val === 'number') return isNaN(val) ? 0 : val;
-  const clean = String(val).replace(/[$,€£% ]/g, '').replace(/,/g, '');
-  const n = Number(clean);
-  return isNaN(n) ? 0 : n;
+export function parseNumericValue(value: unknown): number | null {
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === '' ||
+    String(value).trim().toUpperCase() === 'NULL' ||
+    String(value).trim().toUpperCase() === 'NAN' ||
+    String(value).trim().toUpperCase() === 'NONE' ||
+    String(value).trim().toUpperCase() === 'N/A'
+  ) {
+    return null;
+  }
+
+  const cleaned = String(value)
+    .replace(/[$,€£% ]/g, '')
+    .replace(/,/g, '');
+
+  const number = Number(cleaned);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+/**
+ * Helper to safely extract numeric value with fallback
+ */
+export function getNumericValue(val: unknown, fallback: number = 0): number {
+  const parsed = parseNumericValue(val);
+  return parsed !== null ? parsed : fallback;
 }
 
 /**
@@ -181,7 +203,7 @@ export function resolveColumn(
 
   // 1. Direct case-insensitive match
   for (const term of userTerms) {
-    const t = term.toLowerCase().trim();
+    const t = term.toLowerCase().replace(/[^a-z0-9_]/g, '').trim();
     if (!t) continue;
     const direct = cols.find((c) => c.name.toLowerCase() === t);
     if (direct) return direct.name;
@@ -189,9 +211,9 @@ export function resolveColumn(
 
   // 2. Substring match
   for (const term of userTerms) {
-    const t = term.toLowerCase().trim();
+    const t = term.toLowerCase().replace(/[^a-z0-9_]/g, '').trim();
     if (!t) continue;
-    const sub = cols.find((c) => c.name.toLowerCase().includes(t) || t.includes(c.name.toLowerCase()));
+    const sub = cols.find((c) => c.name.toLowerCase().includes(t) || (t.length >= 3 && t.includes(c.name.toLowerCase())));
     if (sub) return sub.name;
   }
 
@@ -209,7 +231,8 @@ export function resolveColumn(
   };
 
   for (const term of userTerms) {
-    const t = term.toLowerCase().trim();
+    const t = term.toLowerCase().replace(/[^a-z0-9_]/g, '').trim();
+    if (!t) continue;
     for (const [canonical, syns] of Object.entries(synonyms)) {
       if (syns.some((s) => t.includes(s) || s.includes(t))) {
         const found = cols.find((c) => syns.some((s) => c.name.toLowerCase().includes(s)));
@@ -363,11 +386,12 @@ export function executeDatasetAnalysis(
   // -------------------------------------------------------------
   if (qLower.includes('negative') || qLower.includes('loss') || qLower.includes('losses') || qLower.includes('lost money')) {
     const profitCol = resolveColumn(dataset, 'numeric', ['profit', 'margin', 'net_income', targetNumCol]) || targetNumCol;
-    const lossRows = rows.filter((r) => getNumericValue(r[profitCol]) < 0);
-    const totalLoss = lossRows.reduce((acc, r) => acc + getNumericValue(r[profitCol]), 0);
+    const validRows = rows.filter((r) => parseNumericValue(r[profitCol]) !== null);
+    const lossRows = validRows.filter((r) => (parseNumericValue(r[profitCol]) ?? 0) < 0);
+    const totalLoss = lossRows.reduce((acc, r) => acc + (parseNumericValue(r[profitCol]) ?? 0), 0);
 
     pythonCode = `loss_df = df[df['${profitCol}'] < 0].sort_values(by='${profitCol}', ascending=True)\nloss_df[['${groupCol}', '${profitCol}']][:15]`;
-    calculation = `Filtered rows where ${profitCol} < 0. Found ${lossRows.length} loss-making transactions out of ${rows.length} total rows.`;
+    calculation = `Filtered rows where ${profitCol} < 0. Found ${lossRows.length} loss-making transactions out of ${validRows.length} valid rows.`;
     answer = `Found **${lossRows.length}** records that generated negative ${profitCol} (losses), resulting in a cumulative loss of **$${Math.abs(totalLoss).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}**.`;
 
     tableResult = lossRows.slice(0, 15).map((r) => ({
@@ -392,7 +416,8 @@ export function executeDatasetAnalysis(
 
     rows.forEach((r) => {
       const gKey = String(r[catCol] || 'Other');
-      const val = getNumericValue(r[numCol]);
+      const val = parseNumericValue(r[numCol]);
+      if (val === null) return;
       groupSums[gKey] = (groupSums[gKey] || 0) + val;
       grandTotal += val;
     });
@@ -426,8 +451,12 @@ export function executeDatasetAnalysis(
     const col2 = resolveColumn(dataset, 'numeric', ['profit', 'sales', numericCols[1] || '']) || (numericCols[1] !== col1 ? numericCols[1] : numericCols[0]) || targetNumCol;
 
     const validPairs = rows
-      .map((r) => ({ x: getNumericValue(r[col1]), y: getNumericValue(r[col2]) }))
-      .filter((p) => !isNaN(p.x) && !isNaN(p.y));
+      .map((r) => {
+        const x = parseNumericValue(r[col1]);
+        const y = parseNumericValue(r[col2]);
+        return (x !== null && y !== null) ? { x, y } : null;
+      })
+      .filter((p): p is { x: number; y: number } => p !== null);
 
     const n = validPairs.length;
     let rVal = 0;
@@ -465,7 +494,6 @@ export function executeDatasetAnalysis(
     const numCol = resolveColumn(dataset, 'numeric', ['sales', 'revenue', 'profit', targetNumCol]) || targetNumCol;
     const catCol = resolveColumn(dataset, 'string', ['region', 'category', 'product', groupCol]) || groupCol;
 
-    // Aggregate by group and period
     const periods = Array.from(new Set(rows.map((r) => String(r[dateCol] || '').substring(0, 7)).filter(Boolean))).sort();
     const periodA = periods[periods.length - 2] || periods[0] || 'Period 1';
     const periodB = periods[periods.length - 1] || periods[periods.length - 1] || 'Period 2';
@@ -474,7 +502,8 @@ export function executeDatasetAnalysis(
     rows.forEach((r) => {
       const g = String(r[catCol] || 'Other');
       const p = String(r[dateCol] || '').substring(0, 7);
-      const val = getNumericValue(r[numCol]);
+      const val = parseNumericValue(r[numCol]);
+      if (val === null) return;
       if (!groupPeriodTotals[g]) groupPeriodTotals[g] = { pA: 0, pB: 0 };
       if (p === periodA) groupPeriodTotals[g].pA += val;
       if (p === periodB) groupPeriodTotals[g].pB += val;
@@ -518,14 +547,14 @@ export function executeDatasetAnalysis(
       ? resolveColumn(dataset, 'string', ['city', groupCol]) || groupCol
       : resolveColumn(dataset, 'string', ['product', 'customer', 'region', 'category', groupCol]) || groupCol;
 
-    // Extract N if specified (e.g. top 5, top 10, top 3)
     const matchN = qLower.match(/(?:top|bottom)\s+(\d+)/);
     const limitN = matchN ? parseInt(matchN[1], 10) : (qLower.includes('top 5') ? 5 : 10);
 
     const agg: Record<string, { sum: number; count: number }> = {};
     rows.forEach((r) => {
       const key = String(r[rankCol] || 'Unknown');
-      const val = getNumericValue(r[numCol]);
+      const val = parseNumericValue(r[numCol]);
+      if (val === null) return;
       if (!agg[key]) agg[key] = { sum: 0, count: 0 };
       agg[key].sum += val;
       agg[key].count += 1;
@@ -553,28 +582,42 @@ export function executeDatasetAnalysis(
   // -------------------------------------------------------------
   // QUERY INTENT 6: Total Sum / Grand Total (Overall without grouping)
   // -------------------------------------------------------------
-  else if (qLower.startsWith('what is total') || qLower.startsWith('total ') || qLower === 'what is the total sales' || qLower === 'what is the total sales?' || qLower.includes('sum of')) {
-    const numCol = resolveColumn(dataset, 'numeric', ['sales', 'profit', 'revenue', targetNumCol]) || targetNumCol;
-    const totalSum = rows.reduce((acc, r) => acc + getNumericValue(r[numCol]), 0);
-    const avgVal = rows.length > 0 ? totalSum / rows.length : 0;
+  else if (
+    !qLower.includes(' by ') &&
+    !qLower.includes(' per ') &&
+    (qLower.startsWith('what is total') ||
+      qLower.startsWith('total ') ||
+      qLower === 'what is the total sales' ||
+      qLower === 'what is the total sales?' ||
+      qLower.includes('sum of') ||
+      qLower.includes('grand total'))
+  ) {
+    const numCol = resolveColumn(dataset, 'numeric', [
+      aiPlan?.targetColumn || '',
+      ...qLower.split(/[\s,]+/),
+      targetNumCol
+    ]) || targetNumCol;
+    const validRows = rows.filter((r) => parseNumericValue(r[numCol]) !== null);
+    const totalSum = validRows.reduce((acc, r) => acc + (parseNumericValue(r[numCol]) ?? 0), 0);
+    const avgVal = validRows.length > 0 ? totalSum / validRows.length : 0;
 
     pythonCode = `total_${numCol.toLowerCase()} = df["${numCol}"].sum()\ntotal_${numCol.toLowerCase()}`;
-    calculation = `Formula: SUM(${numCol}) computed deterministically across all ${rows.length} rows`;
-    answer = `The **total ${numCol}** across all **${rows.length.toLocaleString()}** records in the dataset is **$${totalSum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}** (with an average of $${avgVal.toFixed(2)} per record).`;
+    calculation = `Formula: SUM(${numCol}) computed deterministically across ${validRows.length} valid records${rows.length !== validRows.length ? ` (Excluded ${rows.length - validRows.length} null rows)` : ''}`;
+    answer = `The **total ${numCol}** across **${validRows.length.toLocaleString()}** valid records in the dataset is **$${totalSum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}** (with an average of $${avgVal.toFixed(2)} per record).`;
 
-    // Supporting table breakdown by top dimension
     const groupSums: Record<string, number> = {};
-    rows.forEach((r) => {
+    validRows.forEach((r) => {
       const g = String(r[groupCol] || 'All');
-      groupSums[g] = (groupSums[g] || 0) + getNumericValue(r[numCol]);
+      const val = parseNumericValue(r[numCol]) ?? 0;
+      groupSums[g] = (groupSums[g] || 0) + val;
     });
 
     tableResult = [
-      { Metric: `Grand Total ${numCol}`, Value: `$${Math.round(totalSum).toLocaleString()}`, Records: rows.length },
+      { Metric: `Grand Total ${numCol}`, Value: `$${Math.round(totalSum).toLocaleString()}`, Records: validRows.length },
       ...Object.entries(groupSums).map(([k, v]) => ({
         Metric: `${groupCol}: ${k}`,
         Value: `$${Math.round(v).toLocaleString()}`,
-        Records: rows.filter((r) => String(r[groupCol]) === k).length
+        Records: validRows.filter((r) => String(r[groupCol]) === k).length
       }))
     ];
 
@@ -591,22 +634,22 @@ export function executeDatasetAnalysis(
       ? resolveColumn(dataset, 'numeric', ['profit', targetNumCol]) || targetNumCol
       : resolveColumn(dataset, 'numeric', ['sales', 'revenue', targetNumCol]) || targetNumCol;
 
-    const nonNullRows = rows.filter((r) => r[numCol] !== null && r[numCol] !== undefined && r[numCol] !== '');
-    const totalSum = nonNullRows.reduce((acc, r) => acc + getNumericValue(r[numCol]), 0);
-    const avgVal = nonNullRows.length > 0 ? totalSum / nonNullRows.length : 0;
+    const validRows = rows.filter((r) => parseNumericValue(r[numCol]) !== null);
+    const totalSum = validRows.reduce((acc, r) => acc + (parseNumericValue(r[numCol]) ?? 0), 0);
+    const avgVal = validRows.length > 0 ? totalSum / validRows.length : 0;
 
     const groupMap: Record<string, { sum: number; count: number }> = {};
-    nonNullRows.forEach((r) => {
+    validRows.forEach((r) => {
       const gKey = String(r[groupCol] || 'Other');
-      const val = getNumericValue(r[numCol]);
+      const val = parseNumericValue(r[numCol]) ?? 0;
       if (!groupMap[gKey]) groupMap[gKey] = { sum: 0, count: 0 };
       groupMap[gKey].sum += val;
       groupMap[gKey].count += 1;
     });
 
     pythonCode = `avg_val = df["${numCol}"].mean()\ndf.groupby("${groupCol}")["${numCol}"].mean().reset_index()`;
-    calculation = `Formula: Total Sum ($${Math.round(totalSum).toLocaleString()}) ÷ Valid Records (${nonNullRows.length}) = $${avgVal.toFixed(2)}${rows.length !== nonNullRows.length ? ` (Excluded ${rows.length - nonNullRows.length} null rows)` : ''}`;
-    answer = `The overall **average ${numCol}** across all ${nonNullRows.length} valid records is **$${avgVal.toFixed(2)}**. Breakdown by ${groupCol} is detailed in the table below.`;
+    calculation = `Formula: Total Sum ($${Math.round(totalSum).toLocaleString()}) ÷ Valid Records (${validRows.length}) = $${avgVal.toFixed(2)}${rows.length !== validRows.length ? ` (Excluded ${rows.length - validRows.length} null rows)` : ''}`;
+    answer = `The overall **average ${numCol}** across all ${validRows.length} valid records is **$${avgVal.toFixed(2)}**. Breakdown by ${groupCol} is detailed in the table below.`;
 
     tableResult = Object.entries(groupMap).map(([gKey, stats]) => ({
       [groupCol]: gKey,
@@ -627,9 +670,11 @@ export function executeDatasetAnalysis(
 
     const dateMap: Record<string, number> = {};
     rows.forEach((r) => {
+      const val = parseNumericValue(r[numCol]);
+      if (val === null) return;
       const dStr = String(r[dateCol] || r['Date'] || '2025-01');
       const monthKey = dStr.substring(0, 7); // YYYY-MM
-      dateMap[monthKey] = (dateMap[monthKey] || 0) + getNumericValue(r[numCol]);
+      dateMap[monthKey] = (dateMap[monthKey] || 0) + val;
     });
 
     const sortedDates = Object.entries(dateMap).sort((a, b) => a[0].localeCompare(b[0]));
@@ -653,7 +698,10 @@ export function executeDatasetAnalysis(
   // -------------------------------------------------------------
   else if (qLower.includes('distribution') || qLower.includes('histogram')) {
     const numCol = resolveColumn(dataset, 'numeric', ['profit', 'sales', targetNumCol]) || targetNumCol;
-    const vals = rows.map((r) => getNumericValue(r[numCol])).sort((a, b) => a - b);
+    const vals = rows
+      .map((r) => parseNumericValue(r[numCol]))
+      .filter((v): v is number => v !== null)
+      .sort((a, b) => a - b);
     const min = vals[0] || 0;
     const max = vals[vals.length - 1] || 100;
     const bucketCount = 5;
@@ -682,7 +730,7 @@ export function executeDatasetAnalysis(
     tableResult = Object.entries(buckets).map(([binRange, freq]) => ({
       'Range Interval': binRange,
       'Record Count': freq,
-      'Percentage (%)': parseFloat(((freq / vals.length) * 100).toFixed(1))
+      'Percentage (%)': parseFloat(((freq / (vals.length || 1)) * 100).toFixed(1))
     }));
 
     chartType = 'bar';
@@ -696,21 +744,22 @@ export function executeDatasetAnalysis(
     const groupMap: Record<string, { sum: number; count: number; mean: number }> = {};
     rows.forEach((r) => {
       const gKey = String(r[groupCol] || 'All');
-      const val = getNumericValue(r[targetNumCol]);
+      const val = parseNumericValue(r[targetNumCol]);
+      if (val === null) return;
       if (!groupMap[gKey]) groupMap[gKey] = { sum: 0, count: 0, mean: 0 };
       groupMap[gKey].sum += val;
       groupMap[gKey].count += 1;
     });
 
     Object.keys(groupMap).forEach((k) => {
-      groupMap[k].mean = groupMap[k].sum / (groupMap[k].count || 1);
+      groupMap[k].mean = groupMap[k].count > 0 ? groupMap[k].sum / groupMap[k].count : 0;
     });
 
     const sorted = Object.entries(groupMap).sort((a, b) => b[1].sum - a[1].sum);
     const top = sorted[0] || ['None', { sum: 0, count: 0, mean: 0 }];
 
     pythonCode = `df.groupby("${groupCol}")["${targetNumCol}"].sum().sort_values(ascending=False).reset_index()`;
-    calculation = `Calculated total ${targetNumCol} grouped by ${groupCol} across all ${rows.length} rows`;
+    calculation = `Calculated total ${targetNumCol} grouped by ${groupCol} across all valid records`;
     answer = `Analyzed **${rows.length.toLocaleString()}** rows. Grouped by **${groupCol}**, **${top[0]}** is the highest contributor with **$${top[1].sum.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}** (${top[1].count} transactions).`;
 
     tableResult = sorted.map(([k, stats]) => ({
@@ -787,8 +836,8 @@ export function computeDatasetStatistics(dataset: DatasetMetadata) {
 
   numericCols.forEach((col) => {
     const vals = rows
-      .map((r) => getNumericValue(r[col.name]))
-      .filter((v) => !isNaN(v))
+      .map((r) => parseNumericValue(r[col.name]))
+      .filter((v): v is number => v !== null)
       .sort((a, b) => a - b);
 
     if (vals.length === 0) return;
