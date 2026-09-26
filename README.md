@@ -3,6 +3,9 @@
 <div align="center">
 
 ![DataSage AI Banner](https://img.shields.io/badge/DataSage_AI-Intelligent_Spreadsheet_Analytics-004ac6?style=for-the-badge&logo=google&logoColor=white)
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-data--sage--ai.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://data-sage-ai.netlify.app/)
+[![GitHub Repository](https://img.shields.io/badge/⭐%20GitHub-bikram73%2FDataSage__AI-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/bikram73/DataSage_AI)
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -10,6 +13,9 @@
 [![Gemini API](https://img.shields.io/badge/Google_Gemini-3.6_Flash-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
 
 **An end-to-end intelligent data analytics workspace that transforms raw tabular spreadsheets (CSV, XLSX, XLS) into conversational insights, deterministic Pandas computations, statistical distributions, and interactive Recharts visualizations.**
+
+🔗 **Live Application**: [https://data-sage-ai.netlify.app/](https://data-sage-ai.netlify.app/)  
+📦 **Source Code Repository**: [https://github.com/bikram73/DataSage_AI](https://github.com/bikram73/DataSage_AI)
 
 </div>
 
@@ -135,8 +141,8 @@
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-username/datasage-ai.git
-   cd datasage-ai
+   git clone https://github.com/bikram73/DataSage_AI.git
+   cd DataSage_AI
    ```
 
 2. **Install Dependencies**:
