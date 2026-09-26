@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { parseSpreadsheetFile } from '../utils/fileParser';
-import { uploadCustomDataset, loadSampleDataset, fetchSampleDatasets, DatasetInfo } from '../services/api';
+import { uploadCustomDataset, loadSampleDataset, fetchSampleDatasets, fetchDatasetPreview, clearDataset, DatasetInfo } from '../services/api';
 
 interface UploadPageProps {
   onNavigate: (tab: string) => void;
@@ -20,6 +20,15 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
     fetchSampleDatasets()
       .then(setSampleDatasets)
       .catch((err) => console.warn('Could not fetch sample datasets:', err));
+
+    fetchDatasetPreview()
+      .then((ds) => {
+        if (ds && ds.name) {
+          setActiveDatasetInfo(ds);
+          setUploadState('success');
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleProcessFile = async (file: File) => {
@@ -78,20 +87,32 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
     }
   };
 
+  const handleRemoveActiveDataset = async () => {
+    if (window.confirm('Are you sure you want to remove the current active dataset?')) {
+      try {
+        await clearDataset();
+        setActiveDatasetInfo(null);
+        setUploadState('idle');
+      } catch (err) {
+        console.error('Failed to clear dataset', err);
+      }
+    }
+  };
+
   return (
     <div id="upload-page" className="w-full p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-[#F8FAFC]">
       {/* Header Section */}
       <div className="max-w-3xl w-full mb-6 text-center">
-        <h2 className="font-['Plus_Jakarta_Sans'] text-3xl font-bold text-[#0F172A] mb-1">
+        <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-bold text-[#0F172A] mb-1">
           Import Spreadsheet Dataset
         </h2>
-        <p className="text-sm text-[#64748B]">
-          Upload your CSV, XLSX, or XLS files up to 100MB, or pick a sample dataset to ask natural language Q&A questions.
+        <p className="text-xs sm:text-sm text-[#64748B]">
+          Upload your CSV, XLSX, or XLS files, or pick a sample dataset to ask natural language Q&A questions.
         </p>
       </div>
 
       {/* Centered Upload Container */}
-      <div className="max-w-3xl w-full bg-white shadow-sm rounded-[18px] p-6 border border-[#E2E8F0] flex flex-col gap-6">
+      <div className="max-w-3xl w-full bg-white shadow-xs rounded-[18px] p-6 sm:p-8 border border-[#E2E8F0] flex flex-col gap-6">
         
         {/* Error Banner */}
         {uploadState === 'error' && (
@@ -116,7 +137,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-xl bg-[#F8FAFC] hover:border-[#2563EB] hover:bg-[#2563EB]/5 transition-all duration-300 p-10 flex flex-col items-center justify-center text-center"
+            className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-2xl bg-[#F8FAFC] hover:border-[#004ac6] hover:bg-[#004ac6]/5 transition-all duration-300 p-8 sm:p-12 flex flex-col items-center justify-center text-center"
           >
             <input
               ref={fileInputRef}
@@ -125,13 +146,13 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
               className="hidden"
               onChange={handleFileChange}
             />
-            <div className="w-16 h-16 rounded-full bg-[#2563EB]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[#2563EB] text-4xl">upload_file</span>
+            <div className="w-16 h-16 rounded-2xl bg-[#004ac6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[#004ac6] text-4xl">upload_file</span>
             </div>
             <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-lg text-[#0F172A] mb-1">
               Click to upload or drag and drop spreadsheet
             </h3>
-            <p className="text-sm text-[#64748B]">Supported formats: CSV, XLS, XLSX (Max 100MB)</p>
+            <p className="text-xs sm:text-sm text-[#64748B]">Supported formats: CSV, XLS, XLSX (Max 100MB)</p>
           </div>
         )}
 
@@ -140,14 +161,14 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
           <div id="uploading-state" className="flex flex-col gap-4 p-6 border border-[#E2E8F0] rounded-xl bg-[#F8FAFC]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#2563EB] animate-spin">sync</span>
+                <span className="material-symbols-outlined text-[#004ac6] animate-spin">sync</span>
                 <span className="text-sm font-medium text-[#0F172A]">Parsing and analyzing spreadsheet columns...</span>
               </div>
-              <span className="text-xs font-semibold text-[#2563EB]">{progress}%</span>
+              <span className="text-xs font-semibold text-[#004ac6]">{progress}%</span>
             </div>
             <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#2563EB] transition-all duration-300"
+                className="h-full bg-[#004ac6] transition-all duration-300"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -161,22 +182,30 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
             {/* Validation Banner */}
             <div id="validation-success" className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
               <span className="material-symbols-outlined text-green-600">check_circle</span>
-              <span className="text-sm font-medium">Dataset successfully loaded & validated! Ready for Pandas natural language Q&A.</span>
+              <span className="text-sm font-medium">Dataset active and ready for analysis!</span>
             </div>
 
             {/* File Info Card */}
-            <div id="file-info-card" className="flex flex-col gap-4 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+            <div id="file-info-card" className="flex flex-col gap-4 p-4 sm:p-5 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0]">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Active Dataset Info</h4>
-                <button 
-                  onClick={() => setUploadState('idle')}
-                  className="text-red-600 hover:underline text-xs font-medium flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-sm">refresh</span> Change Dataset
-                </button>
+                <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Active Dataset Info</h4>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={handleRemoveActiveDataset}
+                    className="text-red-600 hover:text-red-700 text-xs font-semibold flex items-center gap-1 hover:underline"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete_outline</span> Remove
+                  </button>
+                  <button 
+                    onClick={() => setUploadState('idle')}
+                    className="text-[#004ac6] hover:underline text-xs font-semibold flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">upload</span> Upload New
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                 <div className="flex flex-col">
                   <span className="text-xs text-[#64748B]">Dataset Name</span>
                   <span className="text-sm font-semibold text-[#0F172A] truncate">{activeDatasetInfo.name}</span>
@@ -198,7 +227,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
               {activeDatasetInfo.columns && activeDatasetInfo.columns.length > 0 && (
                 <div className="border-t border-[#E2E8F0] pt-3">
                   <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block mb-2">Detected Columns:</span>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
                     {activeDatasetInfo.columns.map((col, idx) => (
                       <span key={idx} className="inline-flex items-center gap-1 bg-white border border-[#CBD5E1] px-2.5 py-1 rounded-md text-xs font-medium text-[#0F172A]">
                         <span>{col.name}</span>
@@ -216,20 +245,27 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* CTA Actions */}
-            <div className="flex items-center justify-end gap-3 mt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2">
               <button
                 onClick={() => onNavigate('preview')}
-                className="px-5 py-2.5 rounded-xl text-xs font-medium border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center gap-1.5"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-medium border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-sm">table_chart</span>
                 <span>View Dataset Preview</span>
               </button>
               <button
+                onClick={() => onNavigate('dashboard')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-medium border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">insights</span>
+                <span>View Dashboard</span>
+              </button>
+              <button
                 onClick={() => onNavigate('workspace')}
-                className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#2563EB] text-white shadow-lg shadow-[#2563EB]/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold bg-[#004ac6] text-white shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                <span>Ask Q&A Questions</span>
+                <span>Ask AI Questions</span>
               </button>
             </div>
           </div>
@@ -247,20 +283,20 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
               <div
                 key={sample.id}
                 onClick={() => handleSelectSample(sample.id)}
-                className={`p-3.5 bg-white border border-[#CBD5E1]/60 rounded-xl flex flex-col justify-between hover:border-[#2563EB] hover:shadow-md transition-all cursor-pointer ${
+                className={`p-4 bg-white border border-[#CBD5E1]/70 rounded-2xl flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all cursor-pointer ${
                   loadingSample === sample.id ? 'opacity-60 pointer-events-none' : ''
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-semibold text-[#0F172A] truncate">{sample.name}</span>
-                    <span className="text-[10px] font-bold bg-blue-50 text-[#2563EB] px-1.5 py-0.5 rounded">{sample.fileType}</span>
+                    <span className="text-[10px] font-bold bg-blue-50 text-[#004ac6] px-1.5 py-0.5 rounded">{sample.fileType}</span>
                   </div>
                   <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed mb-3">{sample.description}</p>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-[#64748B] border-t border-slate-100 pt-2">
                   <span>{sample.rowCount.toLocaleString()} rows • {sample.columnCount} cols</span>
-                  <span className="text-[#2563EB] font-semibold flex items-center gap-0.5">
+                  <span className="text-[#004ac6] font-semibold flex items-center gap-0.5">
                     Select <span className="material-symbols-outlined text-xs">arrow_forward</span>
                   </span>
                 </div>
@@ -274,9 +310,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
       <footer className="mt-8 max-w-3xl w-full flex flex-col md:flex-row justify-between items-center text-[#64748B] text-xs">
         <span>© 2026 DataSage AI. Natural Language Spreadsheet Analytics.</span>
         <div className="flex items-center gap-4 mt-2 md:mt-0">
-          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#2563EB] underline transition-colors">Documentation</a>
-          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#2563EB] underline transition-colors">In-Memory Engine</a>
-          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#2563EB] underline transition-colors">Privacy</a>
+          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">Documentation</a>
+          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">In-Memory Engine</a>
+          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-[#004ac6] underline transition-colors">Privacy</a>
         </div>
       </footer>
     </div>

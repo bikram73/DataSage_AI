@@ -54,8 +54,8 @@ export interface DatasetStatistics {
 
 const sampleList = Object.values(SAMPLE_DATASETS);
 
-// In-Memory state for client-side Netlify fallback
-let currentLocalDataset: DatasetMetadata = sampleList[0];
+// In-Memory state: starts empty until user uploads or picks a dataset
+let currentLocalDataset: DatasetMetadata | null = null;
 
 export async function fetchSampleDatasets(): Promise<DatasetInfo[]> {
   try {
@@ -80,6 +80,9 @@ export async function fetchSampleDatasets(): Promise<DatasetInfo[]> {
 }
 
 export async function loadSampleDataset(datasetId: string): Promise<DatasetInfo> {
+  const sample = SAMPLE_DATASETS[datasetId] || sampleList[0];
+  currentLocalDataset = sample;
+
   try {
     const res = await fetch('/api/upload', {
       method: 'POST',
@@ -94,8 +97,6 @@ export async function loadSampleDataset(datasetId: string): Promise<DatasetInfo>
     console.info('Using client-side fallback for sample dataset selection');
   }
 
-  const sample = SAMPLE_DATASETS[datasetId] || sampleList[0];
-  currentLocalDataset = sample;
   return {
     id: sample.id,
     name: sample.name,
@@ -114,6 +115,9 @@ export async function uploadCustomDataset(
   fileType: 'CSV' | 'XLSX' | 'XLS' = 'CSV',
   fileSizeKB: number = 50
 ): Promise<DatasetInfo> {
+  const analyzed = analyzeRawDataset(name, rows, fileType, fileSizeKB);
+  currentLocalDataset = analyzed;
+
   try {
     const res = await fetch('/api/upload', {
       method: 'POST',
@@ -128,9 +132,6 @@ export async function uploadCustomDataset(
     console.info('Using client-side fallback for custom dataset upload');
   }
 
-  const analyzed = analyzeRawDataset(name, rows, fileType, fileSizeKB);
-  currentLocalDataset = analyzed;
-
   return {
     id: analyzed.id,
     name: analyzed.name,
@@ -143,15 +144,33 @@ export async function uploadCustomDataset(
   };
 }
 
-export async function fetchDatasetPreview(): Promise<PreviewData> {
+export async function clearDataset(): Promise<void> {
+  currentLocalDataset = null;
+  try {
+    await fetch('/api/clear', { method: 'POST' });
+  } catch (err) {
+    console.info('Cleared dataset locally');
+  }
+}
+
+export async function fetchDatasetPreview(): Promise<PreviewData | null> {
   try {
     const res = await fetch('/api/preview');
     if (res.ok) {
       const data = await res.json();
-      if (data && data.name) return data;
+      if (data && data.name) {
+        return data;
+      }
+      if (data === null) {
+        if (!currentLocalDataset) return null;
+      }
     }
   } catch (err) {
     console.info('Using client-side fallback for dataset preview');
+  }
+
+  if (!currentLocalDataset) {
+    return null;
   }
 
   return {
@@ -167,15 +186,20 @@ export async function fetchDatasetPreview(): Promise<PreviewData> {
   };
 }
 
-export async function fetchDatasetStatistics(): Promise<DatasetStatistics> {
+export async function fetchDatasetStatistics(): Promise<DatasetStatistics | null> {
   try {
     const res = await fetch('/api/statistics');
     if (res.ok) {
       const data = await res.json();
       if (data && data.stats) return data;
+      if (data === null && !currentLocalDataset) return null;
     }
   } catch (err) {
     console.info('Using client-side fallback for statistics');
+  }
+
+  if (!currentLocalDataset) {
+    return null;
   }
 
   const stats = computeDatasetStatistics(currentLocalDataset);
@@ -198,6 +222,10 @@ export async function queryDataset(question: string): Promise<QueryResult> {
     }
   } catch (err) {
     console.info('Using client-side fallback for dataset query');
+  }
+
+  if (!currentLocalDataset) {
+    throw new Error('No dataset currently loaded. Please upload or import a dataset first.');
   }
 
   const result = executeDatasetAnalysis(currentLocalDataset, question);

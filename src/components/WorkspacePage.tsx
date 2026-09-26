@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { queryDataset, fetchDatasetPreview, QueryResult, PreviewData } from '../services/api';
+import { queryDataset, fetchDatasetPreview, loadSampleDataset, QueryResult, PreviewData } from '../services/api';
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  BarChart, Bar, LineChart, Line, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
@@ -18,7 +18,7 @@ interface ChatMessage {
   loading?: boolean;
 }
 
-const CHART_COLORS = ['#2563EB', '#06B6D4', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#EC4899'];
+const CHART_COLORS = ['#004ac6', '#06B6D4', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#EC4899'];
 
 export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   const [inputQuery, setInputQuery] = useState('');
@@ -26,31 +26,30 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeResult, setActiveResult] = useState<QueryResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingSample, setLoadingSample] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchDatasetPreview()
       .then((ds) => {
-        setActiveDataset(ds);
-        // Initial welcome message
-        const initialMsg: ChatMessage = {
-          id: '1',
-          sender: 'ai',
-          text: `Hello! I'm DataSage AI. I've loaded your spreadsheet **"${ds.name}"** containing **${ds.rowCount.toLocaleString()}** rows and **${ds.columnCount}** columns. Ask me anything in plain English!`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages([initialMsg]);
-      })
-      .catch(() => {
-        setMessages([
-          {
+        if (ds && ds.name) {
+          setActiveDataset(ds);
+          const initialMsg: ChatMessage = {
             id: '1',
             sender: 'ai',
-            text: `DataSage AI is ready. Please select or upload a dataset to begin.`,
+            text: `Hello! I'm DataSage AI. I've loaded your spreadsheet **"${ds.name}"** containing **${ds.rowCount.toLocaleString()}** rows and **${ds.columnCount}** columns. Ask me anything in plain English!`,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-      });
+          };
+          setMessages([initialMsg]);
+        } else {
+          setActiveDataset(null);
+        }
+      })
+      .catch(() => {
+        setActiveDataset(null);
+      })
+      .finally(() => setLoadingInitial(false));
   }, []);
 
   useEffect(() => {
@@ -98,28 +97,98 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
     }
   };
 
+  const handleLoadSample = async () => {
+    setLoadingSample(true);
+    try {
+      const ds = await loadSampleDataset('sales_data');
+      const preview = await fetchDatasetPreview();
+      setActiveDataset(preview || { ...ds, sampleRows: [] });
+      const initialMsg: ChatMessage = {
+        id: Date.now().toString(),
+        sender: 'ai',
+        text: `Loaded **"${ds.name}"** (${ds.rowCount.toLocaleString()} rows, ${ds.columnCount} cols). What would you like to calculate or explore?`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages([initialMsg]);
+    } catch (err) {
+      console.error('Failed to load sample dataset', err);
+    } finally {
+      setLoadingSample(false);
+    }
+  };
+
   const samplePrompts = [
     'Which region had the highest growth?',
-    'What is the average profit?',
-    'Show top 10 customers',
-    'Plot monthly revenue',
-    'Which products lost money?'
+    'What is the average profit and median revenue?',
+    'Show top 10 items ranked by revenue',
+    'Plot monthly sales distribution',
+    'Which categories underperformed target?'
   ];
+
+  if (loadingInitial) {
+    return (
+      <div id="workspace-page" className="w-full h-[calc(100vh-4rem)] flex items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-3">
+          <span className="material-symbols-outlined text-[#004ac6] text-4xl animate-spin">sync</span>
+          <p className="text-sm font-medium text-[#0F172A]">Initializing AI Workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no dataset is active
+  if (!activeDataset) {
+    return (
+      <div id="workspace-page" className="w-full min-h-[calc(100vh-4rem)] p-4 sm:p-8 flex flex-col items-center justify-center bg-[#F8FAFC]">
+        <div className="bg-white p-8 sm:p-10 rounded-2xl border border-[#E2E8F0] shadow-sm text-center max-w-lg w-full flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#eff4ff] text-[#004ac6] flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-3xl">auto_awesome</span>
+          </div>
+          <h3 className="text-xl font-bold text-[#0F172A] mb-2 font-['Plus_Jakarta_Sans']">
+            No Dataset Loaded for Workspace
+          </h3>
+          <p className="text-sm text-[#64748B] mb-6 leading-relaxed">
+            Import a spreadsheet dataset (CSV, XLSX, XLS) to begin asking natural language questions, generating charts, and executing Python Pandas computations.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+            <button
+              onClick={() => onNavigate('upload')}
+              className="px-6 py-3 bg-[#004ac6] text-white rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">upload_file</span>
+              <span>Import Dataset</span>
+            </button>
+            <button
+              disabled={loadingSample}
+              onClick={handleLoadSample}
+              className="px-5 py-3 bg-white border border-[#CBD5E1] text-[#0F172A] rounded-xl font-semibold text-xs sm:text-sm hover:bg-[#F1F5F9] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {loadingSample ? 'sync' : 'dataset'}
+              </span>
+              <span>{loadingSample ? 'Loading...' : 'Try Sample Dataset'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="workspace-page" className="w-full flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
       {/* Central Chat Interface */}
       <section className="flex-1 flex flex-col h-full bg-white relative border-r border-[#E2E8F0] overflow-hidden">
         {/* Chat Header */}
-        <header className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-6 shrink-0 bg-white/80 backdrop-blur-md">
+        <header className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-4 sm:px-6 shrink-0 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#2563EB]">auto_awesome</span>
+            <span className="material-symbols-outlined text-[#004ac6]">auto_awesome</span>
             <div>
-              <h2 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A]">
+              <h2 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-[#0F172A]">
                 Dataset Q&A Chat Workspace
               </h2>
               <p className="text-xs text-[#64748B]">
-                Active: {activeDataset ? `${activeDataset.name} (${activeDataset.rowCount.toLocaleString()} rows)` : 'Loading dataset...'}
+                Active: <span className="font-medium text-[#004ac6]">{activeDataset.name}</span> ({activeDataset.rowCount.toLocaleString()} rows)
               </p>
             </div>
           </div>
@@ -128,28 +197,30 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('preview')}
               className="px-3 py-1.5 bg-[#F1F5F9] text-xs font-semibold text-[#0F172A] rounded-lg hover:bg-[#E2E8F0] transition-colors flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-sm">table_chart</span> Dataset
+              <span className="material-symbols-outlined text-sm">table_chart</span>
+              <span className="hidden sm:inline">Dataset</span>
             </button>
             <button
               onClick={() => onNavigate('upload')}
-              className="px-3 py-1.5 bg-[#2563EB] text-white text-xs font-semibold rounded-lg hover:brightness-110 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 bg-[#004ac6] text-white text-xs font-semibold rounded-lg hover:brightness-110 transition-colors flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-sm">upload</span> New File
+              <span className="material-symbols-outlined text-sm">upload</span>
+              <span className="hidden sm:inline">Change File</span>
             </button>
           </div>
         </header>
 
         {/* Message Area */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 custom-scrollbar space-y-6 sm:space-y-8">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 custom-scrollbar space-y-6">
           {messages.map((msg) => (
-            <div key={msg.id} className="flex gap-4 max-w-3xl mx-auto w-full">
+            <div key={msg.id} className="flex gap-3 sm:gap-4 max-w-3xl mx-auto w-full">
               {msg.sender === 'user' ? (
                 <>
                   <div className="w-8 h-8 shrink-0 rounded-lg bg-[#E2E8F0] flex items-center justify-center">
                     <span className="material-symbols-outlined text-[#64748B] text-[20px]">person</span>
                   </div>
                   <div className="flex-1">
-                    <div className="bg-[#2563EB] text-white p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm font-medium">
+                    <div className="bg-[#004ac6] text-white p-3.5 sm:p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-xs font-medium">
                       {msg.text}
                     </div>
                     <span className="text-[11px] text-[#64748B] mt-1 block ml-1">{msg.time}</span>
@@ -157,16 +228,16 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                 </>
               ) : (
                 <>
-                  <div className="w-8 h-8 shrink-0 rounded-lg bg-[#2563EB] flex items-center justify-center shadow-sm">
+                  <div className="w-8 h-8 shrink-0 rounded-lg bg-[#004ac6] flex items-center justify-center shadow-xs">
                     <span className="material-symbols-outlined text-white text-[20px]">auto_awesome</span>
                   </div>
                   <div className="flex-1 space-y-4">
-                    <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-2xl rounded-tl-none text-[#0F172A] text-sm leading-relaxed">
-                      <p className="font-medium">{msg.text}</p>
+                    <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-3.5 sm:p-4 rounded-2xl rounded-tl-none text-[#0F172A] text-sm leading-relaxed">
+                      <p className="font-medium whitespace-pre-wrap">{msg.text}</p>
                     </div>
 
                     {msg.result && (
-                      <div className="space-y-4 bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-sm">
+                      <div className="space-y-4 bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-xs">
                         {/* Result Table */}
                         {msg.result.table && msg.result.table.length > 0 && (
                           <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
@@ -211,7 +282,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                                     <XAxis dataKey="name" stroke="#64748B" fontSize={11} />
                                     <YAxis stroke="#64748B" fontSize={11} />
                                     <Tooltip />
-                                    <Line type="monotone" dataKey="value" stroke="#2563EB" strokeWidth={3} />
+                                    <Line type="monotone" dataKey="value" stroke="#004ac6" strokeWidth={3} />
                                   </LineChart>
                                 ) : (
                                   <BarChart data={msg.result.chart.data}>
@@ -219,7 +290,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                                     <XAxis dataKey="name" stroke="#64748B" fontSize={11} />
                                     <YAxis stroke="#64748B" fontSize={11} />
                                     <Tooltip />
-                                    <Bar dataKey="value" fill="#2563EB" radius={[4, 4, 0, 0]}>
+                                    <Bar dataKey="value" fill="#004ac6" radius={[4, 4, 0, 0]}>
                                       {msg.result.chart.data.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                                       ))}
@@ -233,7 +304,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
 
                         {/* Calculation Explanation */}
                         <div className="p-3 bg-[#F1F5F9] rounded-xl border border-[#CBD5E1]/50 text-xs text-[#0F172A] space-y-1">
-                          <span className="font-semibold text-[#2563EB] block">Computation Explanation:</span>
+                          <span className="font-semibold text-[#004ac6] block">Computation Explanation:</span>
                           <p>{msg.result.calculation}</p>
                           <p className="text-[10px] text-[#64748B]">Processed {msg.result.rowsUsed.toLocaleString()} rows in {msg.result.executionTimeMs} ms</p>
                         </div>
@@ -249,94 +320,75 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                               Copy
                             </button>
                           </div>
-                          <pre className="overflow-x-auto text-emerald-400 font-mono text-[11px] leading-relaxed">
-                            {msg.result.pythonCode}
-                          </pre>
+                          <pre className="overflow-x-auto text-emerald-400 pt-1">{msg.result.pythonCode}</pre>
                         </div>
-
-                        {/* Follow Up Questions */}
-                        {msg.result.followUpQuestions && msg.result.followUpQuestions.length > 0 && (
-                          <div className="pt-2">
-                            <span className="text-[11px] font-semibold text-[#64748B] block mb-2">Suggested Follow-ups:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {msg.result.followUpQuestions.map((q, qIdx) => (
-                                <button
-                                  key={qIdx}
-                                  onClick={() => handleSend(q)}
-                                  className="text-xs px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#2563EB] rounded-full hover:bg-blue-100 transition-colors"
-                                >
-                                  {q}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
-
-                    <span className="text-[11px] text-[#64748B] mt-1 block ml-1">{msg.time}</span>
                   </div>
                 </>
               )}
             </div>
           ))}
 
-          {/* Loading Indicator */}
           {isGenerating && (
-            <div className="flex gap-4 max-w-3xl mx-auto w-full pb-6">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[#2563EB]/20 flex items-center justify-center animate-pulse">
-                <span className="material-symbols-outlined text-[#2563EB] text-[20px]">auto_awesome</span>
+            <div className="flex gap-4 max-w-3xl mx-auto w-full">
+              <div className="w-8 h-8 rounded-lg bg-[#004ac6] flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
               </div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 bg-slate-200 animate-pulse rounded-full"></div>
-                <div className="h-4 w-full bg-slate-200 animate-pulse rounded-full"></div>
-                <div className="h-4 w-2/3 bg-slate-200 animate-pulse rounded-full"></div>
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-2xl rounded-tl-none text-xs text-[#64748B] flex items-center gap-2">
+                <span>Executing Pandas analytics engine on dataset...</span>
               </div>
             </div>
           )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Chat Input Area */}
-        <div className="p-4 border-t border-[#E2E8F0] bg-white/80 backdrop-blur-md">
-          <div className="max-w-3xl mx-auto relative group">
-            {/* Suggestion Pills */}
-            <div className="flex gap-1.5 mb-2 overflow-x-auto custom-scrollbar pb-1">
-              {samplePrompts.map((prompt, idx) => (
+        {/* Input Bar & Suggestions */}
+        <div className="p-4 border-t border-[#E2E8F0] bg-white">
+          <div className="max-w-3xl mx-auto space-y-3">
+            {/* Quick Suggestions Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+              <span className="text-[#64748B] whitespace-nowrap text-[11px] font-medium">Suggestions:</span>
+              {samplePrompts.map((prompt, i) => (
                 <button
-                  key={idx}
+                  key={i}
                   onClick={() => handleSend(prompt)}
-                  className="px-3 py-1 bg-[#F1F5F9] text-xs font-medium text-[#0F172A] rounded-full hover:bg-[#E2E8F0] whitespace-nowrap transition-colors"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172A] px-2.5 py-1 rounded-full whitespace-nowrap text-[11px] transition-colors font-medium shrink-0"
                 >
                   {prompt}
                 </button>
               ))}
             </div>
 
-            <div className="relative flex items-center gap-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-2 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/20 transition-all shadow-sm">
-              <input
-                type="text"
-                value={inputQuery}
-                onChange={(e) => setInputQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Ask DataSage about your dataset (e.g. 'Which region had highest average profit?')..."
-                className="flex-1 bg-transparent border-none focus:ring-0 py-2 px-3 text-sm text-[#0F172A] placeholder:text-[#64748B]"
-              />
+            {/* Input form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+              className="flex items-center gap-2"
+            >
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={inputQuery}
+                  onChange={(e) => setInputQuery(e.target.value)}
+                  placeholder="Ask any question about this dataset (e.g. 'What is the total sales by region?')..."
+                  className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl py-3 pl-4 pr-10 text-sm focus:outline-none focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 transition-all text-[#0F172A]"
+                />
+              </div>
 
-              <button 
-                onClick={() => handleSend()}
-                disabled={isGenerating}
-                className="w-10 h-10 bg-[#2563EB] text-white rounded-xl flex items-center justify-center shadow-md hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+              <button
+                type="submit"
+                disabled={!inputQuery.trim() || isGenerating}
+                className="bg-[#004ac6] text-white p-3 rounded-xl shadow-xs hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center shrink-0"
               >
-                <span className="material-symbols-outlined">send</span>
+                <span className="material-symbols-outlined text-[20px]">send</span>
               </button>
-            </div>
-            <p className="text-[11px] text-[#64748B] mt-1.5 text-center">
+            </form>
+
+            <p className="text-[11px] text-[#64748B] text-center">
               DataSage AI computes real Pandas statistics directly on in-memory dataset records.
             </p>
           </div>
@@ -346,7 +398,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
       {/* Right Panel (Active Analytics Sidebar) */}
       <aside className="w-full lg:w-[300px] xl:w-[360px] bg-[#F8FAFC] h-auto lg:h-full flex flex-col shrink-0 border-t lg:border-t-0 lg:border-l border-[#E2E8F0]">
         <div className="h-16 flex items-center px-6 border-b border-[#E2E8F0] shrink-0">
-          <span className="material-symbols-outlined text-[#2563EB] mr-2">analytics</span>
+          <span className="material-symbols-outlined text-[#004ac6] mr-2">analytics</span>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">
             Computation Dashboard
           </h3>
@@ -357,10 +409,10 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
             <>
               {/* Active Chart Card */}
               {activeResult.chart && activeResult.chart.type !== 'none' && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E2E8F0]">
+                <div className="bg-white rounded-xl p-4 shadow-xs border border-[#E2E8F0]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-[#0F172A]">{activeResult.chart.title}</span>
-                    <span className="text-[10px] bg-blue-100 text-[#2563EB] font-bold px-2 py-0.5 rounded uppercase">
+                    <span className="text-[10px] bg-blue-100 text-[#004ac6] font-bold px-2 py-0.5 rounded uppercase">
                       {activeResult.chart.type}
                     </span>
                   </div>
@@ -370,7 +422,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                         <XAxis dataKey="name" stroke="#64748B" fontSize={10} />
                         <YAxis stroke="#64748B" fontSize={10} />
                         <Tooltip />
-                        <Bar dataKey="value" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="value" fill="#004ac6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -403,7 +455,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
             </>
           ) : (
             <div className="p-6 text-center text-xs text-[#64748B]">
-              <span className="material-symbols-outlined text-3xl text-[#2563EB] mb-2 block">insights</span>
+              <span className="material-symbols-outlined text-3xl text-[#004ac6] mb-2 block">insights</span>
               Ask a question in the chat to generate Pandas analytics, charts, and execution logs.
             </div>
           )}
@@ -412,7 +464,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
         <div className="p-4 border-t border-[#E2E8F0] bg-white">
           <button
             onClick={() => onNavigate('dashboard')}
-            className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xs"
           >
             <span className="material-symbols-outlined text-base">monitoring</span>
             View Full Statistics Dashboard

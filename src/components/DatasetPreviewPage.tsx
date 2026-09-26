@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchDatasetPreview, PreviewData } from '../services/api';
+import { fetchDatasetPreview, clearDataset, loadSampleDataset, PreviewData } from '../services/api';
 
 interface DatasetPreviewPageProps {
   onNavigate: (tab: string) => void;
@@ -11,6 +11,8 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [loadingSample, setLoadingSample] = useState<string | null>(null);
 
   useEffect(() => {
     loadPreview();
@@ -29,30 +31,80 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
     }
   };
 
+  const handleRemoveDataset = async () => {
+    if (window.confirm('Are you sure you want to remove this dataset? All preview tables and dashboard metrics will be emptied.')) {
+      setIsRemoving(true);
+      try {
+        await clearDataset();
+        setPreviewData(null);
+        setSelectedRows([]);
+        setSearchTerm('');
+      } catch (err: any) {
+        console.error('Failed to clear dataset:', err);
+      } finally {
+        setIsRemoving(false);
+      }
+    }
+  };
+
+  const handleLoadSample = async (sampleId: string) => {
+    setLoadingSample(sampleId);
+    try {
+      const ds = await loadSampleDataset(sampleId);
+      const preview = await fetchDatasetPreview();
+      setPreviewData(preview || { ...ds, sampleRows: [] });
+    } catch (err: any) {
+      setError('Failed to load sample dataset');
+    } finally {
+      setLoadingSample(null);
+    }
+  };
+
   if (loading) {
     return (
       <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#F8FAFC]">
         <div className="flex flex-col items-center gap-3">
-          <span className="material-symbols-outlined text-[#2563EB] text-4xl animate-spin">sync</span>
+          <span className="material-symbols-outlined text-[#004ac6] text-4xl animate-spin">sync</span>
           <p className="text-sm font-medium text-[#0F172A]">Loading dataset preview...</p>
         </div>
       </div>
     );
   }
 
+  // Empty State when no dataset is uploaded or when user removes dataset
   if (error || !previewData) {
     return (
       <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] p-4 sm:p-8 flex flex-col items-center justify-center bg-[#F8FAFC]">
-        <div className="bg-white p-6 rounded-2xl border border-red-200 text-center max-w-md">
-          <span className="material-symbols-outlined text-red-500 text-4xl mb-2">warning</span>
-          <h3 className="text-lg font-bold text-[#0F172A] mb-1">No Dataset Loaded</h3>
-          <p className="text-sm text-[#64748B] mb-4">{error || 'Please upload a dataset or select a sample dataset first.'}</p>
-          <button
-            onClick={() => onNavigate('upload')}
-            className="px-5 py-2.5 bg-[#2563EB] text-white rounded-xl font-semibold text-xs shadow-md hover:brightness-110"
-          >
-            Upload or Pick Dataset
-          </button>
+        <div className="bg-white p-8 sm:p-10 rounded-2xl border border-[#E2E8F0] shadow-sm text-center max-w-lg w-full flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#eff4ff] text-[#004ac6] flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-3xl">table_chart_view</span>
+          </div>
+          <h3 className="text-xl font-bold text-[#0F172A] mb-2 font-['Plus_Jakarta_Sans']">
+            No Dataset Uploaded
+          </h3>
+          <p className="text-sm text-[#64748B] mb-6 leading-relaxed">
+            There is currently no active dataset. Import your CSV or Excel spreadsheet to preview records, explore columns, view data types, and run natural language AI analysis.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+            <button
+              onClick={() => onNavigate('upload')}
+              className="px-6 py-3 bg-[#004ac6] text-white rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">upload_file</span>
+              <span>Import Dataset</span>
+            </button>
+            <button
+              disabled={loadingSample !== null}
+              onClick={() => handleLoadSample('sales_data')}
+              className="px-5 py-3 bg-white border border-[#CBD5E1] text-[#0F172A] rounded-xl font-semibold text-xs sm:text-sm hover:bg-[#F1F5F9] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {loadingSample ? 'sync' : 'dataset'}
+              </span>
+              <span>{loadingSample ? 'Loading...' : 'Try Sample Dataset'}</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -91,31 +143,47 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
   return (
     <div id="dataset-preview-page" className="w-full min-h-[calc(100vh-4rem)] flex flex-col bg-[#F8FAFC] text-[#0F172A]">
       {/* Sticky Header */}
-      <header id="preview-header" className="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-4">
+      <header id="preview-header" className="bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-3">
           <nav className="flex items-center text-[#64748B] text-xs font-medium">
-            <span className="cursor-pointer hover:text-[#2563EB]" onClick={() => onNavigate('upload')}>Datasets</span>
+            <span className="cursor-pointer hover:text-[#004ac6]" onClick={() => onNavigate('upload')}>Datasets</span>
             <span className="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
             <span className="text-[#0F172A] font-semibold truncate max-w-[150px] sm:max-w-xs">{previewData.name}</span>
           </nav>
+          <span className="text-xs bg-blue-50 text-[#004ac6] font-semibold px-2 py-0.5 rounded-full border border-blue-100 hidden sm:inline">
+            {previewData.rowCount.toLocaleString()} rows
+          </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Remove / Clear Dataset button */}
+          <button
+            onClick={handleRemoveDataset}
+            disabled={isRemoving}
+            title="Remove and empty this dataset"
+            className="bg-white border border-red-200 text-red-600 font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1 sm:gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete_outline</span>
+            <span className="hidden sm:inline">Remove Dataset</span>
+            <span className="sm:hidden">Remove</span>
+          </button>
+
           <button 
             id="preview-export-btn"
             onClick={exportCSV}
-            className="bg-white border border-[#CBD5E1] text-[#0F172A] font-medium text-xs px-2.5 sm:px-4 py-2 rounded-xl hover:bg-[#F1F5F9] transition-colors flex items-center gap-1 sm:gap-2"
+            className="bg-white border border-[#CBD5E1] text-[#0F172A] font-medium text-xs px-2.5 sm:px-3.5 py-2 rounded-xl hover:bg-[#F1F5F9] transition-colors flex items-center gap-1 sm:gap-1.5"
           >
-            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">download</span>
+            <span className="material-symbols-outlined text-[18px]">download</span>
             <span className="hidden sm:inline">Export CSV</span>
             <span className="sm:hidden">CSV</span>
           </button>
+
           <button 
             id="preview-run-analysis-btn"
             onClick={() => onNavigate('workspace')}
-            className="bg-[#2563EB] text-white font-semibold text-xs px-3 sm:px-4 py-2 rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-1 sm:gap-2"
+            className="bg-[#004ac6] text-white font-semibold text-xs px-3 sm:px-4 py-2 rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-1 sm:gap-1.5"
           >
-            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">auto_awesome</span>
+            <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
             <span>Ask AI</span>
           </button>
         </div>
@@ -124,11 +192,11 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
       {/* Main Container */}
       <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-6 max-w-[1440px] mx-auto w-full">
         {/* Statistics Bento Grid */}
-        <section id="preview-stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <section id="preview-stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Rows */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0]">
+          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
             <div className="flex justify-between items-start mb-2">
-              <span className="p-2 bg-[#2563EB]/10 rounded-lg text-[#2563EB] material-symbols-outlined">reorder</span>
+              <span className="p-2 bg-[#004ac6]/10 rounded-lg text-[#004ac6] material-symbols-outlined">reorder</span>
               <span className="text-green-600 bg-green-50 text-[10px] font-bold px-2 py-0.5 rounded-full">{previewData.fileType}</span>
             </div>
             <p className="text-[#64748B] text-xs font-medium">Total Records</p>
@@ -136,7 +204,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
           </div>
 
           {/* Columns */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0]">
+          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
             <div className="flex justify-between items-start mb-2">
               <span className="p-2 bg-cyan-100 rounded-lg text-[#06B6D4] material-symbols-outlined">view_column</span>
             </div>
@@ -145,7 +213,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
           </div>
 
           {/* Numeric Columns */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0]">
+          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
             <div className="flex justify-between items-start mb-2">
               <span className="p-2 bg-purple-100 rounded-lg text-purple-700 material-symbols-outlined">numbers</span>
             </div>
@@ -156,7 +224,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
           </div>
 
           {/* Categorical Columns */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0]">
+          <div className="bg-white p-5 rounded-2xl shadow-xs border border-[#E2E8F0]">
             <div className="flex justify-between items-start mb-2">
               <span className="p-2 bg-amber-100 rounded-lg text-amber-700 material-symbols-outlined">category</span>
             </div>
@@ -176,7 +244,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search dataset cells..."
-              className="w-full bg-white border border-[#CBD5E1] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+              className="w-full bg-white border border-[#CBD5E1] rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 transition-all"
             />
           </div>
 
@@ -188,8 +256,8 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
         </section>
 
         {/* Main Data Table */}
-        <section className="bg-white rounded-[18px] shadow-sm border border-[#E2E8F0] overflow-hidden flex flex-col">
-          <div className="overflow-x-auto custom-scrollbar">
+        <section className="bg-white rounded-[18px] shadow-xs border border-[#E2E8F0] overflow-hidden flex flex-col">
+          <div className="overflow-x-auto custom-scrollbar max-h-[500px]">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B]">
@@ -200,7 +268,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
                         if (e.target.checked) setSelectedRows(rows.map((_, i) => i));
                         else setSelectedRows([]);
                       }}
-                      className="rounded border-[#CBD5E1] text-[#2563EB]"
+                      className="rounded border-[#CBD5E1] text-[#004ac6]"
                     />
                   </th>
                   {columns.map((col, idx) => (
@@ -225,7 +293,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
                     key={rIdx}
                     onClick={() => toggleSelectRow(rIdx)}
                     className={`hover:bg-[#F8FAFC] transition-colors cursor-pointer ${
-                      selectedRows.includes(rIdx) ? 'bg-[#2563EB]/5' : ''
+                      selectedRows.includes(rIdx) ? 'bg-[#004ac6]/5' : ''
                     }`}
                   >
                     <td className="p-4 sticky left-0 bg-white z-10">
@@ -233,11 +301,11 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
                         type="checkbox"
                         checked={selectedRows.includes(rIdx)}
                         onChange={() => toggleSelectRow(rIdx)}
-                        className="rounded border-[#CBD5E1] text-[#2563EB]"
+                        className="rounded border-[#CBD5E1] text-[#004ac6]"
                       />
                     </td>
                     {columns.map((col, cIdx) => (
-                      <td key={cIdx} className="p-4 text-[#0F172A] font-[#191b23]">
+                      <td key={cIdx} className="p-4 text-[#0F172A]">
                         {row[col.name] !== undefined && row[col.name] !== null
                           ? typeof row[col.name] === 'number'
                             ? row[col.name].toLocaleString()
@@ -254,7 +322,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
 
         {/* Schema & Column Breakdown Cards */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0]">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-[#E2E8F0]">
             <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A] mb-3">
               Column Data Types & Quality
             </h4>
@@ -273,7 +341,7 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col justify-between">
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-[#E2E8F0] flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-base text-[#0F172A]">
@@ -284,16 +352,16 @@ export const DatasetPreviewPage: React.FC<DatasetPreviewPageProps> = ({ onNaviga
               <p className="text-xs text-[#64748B] leading-relaxed mb-4">
                 DataSage AI is synced with this spreadsheet dataset. Ask natural language questions like:
               </p>
-              <ul className="text-xs text-[#2563EB] space-y-1.5 list-disc list-inside">
-                <li>Which region had the highest growth?</li>
-                <li>What is the average profit?</li>
-                <li>Show top 10 customers by revenue</li>
-                <li>Plot monthly sales trends</li>
+              <ul className="text-xs text-[#004ac6] space-y-1.5 list-disc list-inside">
+                <li>Which region or category had the highest growth?</li>
+                <li>What is the average and median metric value?</li>
+                <li>Show top 10 items ranked by performance</li>
+                <li>Plot trend and distribution charts</li>
               </ul>
             </div>
             <button
               onClick={() => onNavigate('workspace')}
-              className="mt-4 w-full py-2.5 bg-[#2563EB] text-white rounded-xl font-semibold text-xs shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-2"
+              className="mt-4 w-full py-2.5 bg-[#004ac6] text-white rounded-xl font-semibold text-xs shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">auto_awesome</span>
               <span>Start Q&A Workspace</span>

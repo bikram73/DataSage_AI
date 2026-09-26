@@ -15,8 +15,8 @@ const PORT = 3000;
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-// In-memory active session store (No persistent database required per PRD)
-let activeDataset: DatasetMetadata = SAMPLE_DATASETS['sales_data'];
+// In-memory active session store (No dataset preloaded by default per requirement)
+let activeDataset: DatasetMetadata | null = null;
 
 // Initialize Gemini SDK server-side
 const ai = new GoogleGenAI({
@@ -30,7 +30,19 @@ const ai = new GoogleGenAI({
 
 // API Routes
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", appName: "DataSage AI" });
+  res.json({ status: "ok", appName: "DataSage AI", hasActiveDataset: Boolean(activeDataset) });
+});
+
+// POST /api/clear - Clears active dataset
+app.post("/api/clear", (_req, res) => {
+  activeDataset = null;
+  res.json({ message: "Dataset removed successfully" });
+});
+
+// DELETE /api/upload - Clears active dataset
+app.delete("/api/upload", (_req, res) => {
+  activeDataset = null;
+  res.json({ message: "Dataset removed successfully" });
 });
 
 // GET /api/sample-datasets
@@ -102,6 +114,9 @@ app.post("/api/upload", (req, res) => {
 
 // GET /api/preview
 app.get("/api/preview", (_req, res) => {
+  if (!activeDataset) {
+    return res.json(null);
+  }
   res.json({
     id: activeDataset.id,
     name: activeDataset.name,
@@ -111,12 +126,15 @@ app.get("/api/preview", (_req, res) => {
     fileType: activeDataset.fileType,
     fileSizeKB: activeDataset.fileSizeKB,
     columns: activeDataset.columns,
-    sampleRows: activeDataset.rows.slice(0, 25)
+    sampleRows: activeDataset.rows.slice(0, 100)
   });
 });
 
 // GET /api/statistics
 app.get("/api/statistics", (_req, res) => {
+  if (!activeDataset) {
+    return res.json(null);
+  }
   const stats = computeDatasetStatistics(activeDataset);
   res.json({
     datasetName: activeDataset.name,
@@ -128,6 +146,10 @@ app.get("/api/statistics", (_req, res) => {
 app.post("/api/query", async (req, res) => {
   try {
     const { question } = req.body;
+
+    if (!activeDataset) {
+      return res.status(400).json({ error: "No active dataset loaded. Please upload a dataset first." });
+    }
 
     if (!question || typeof question !== "string") {
       return res.status(400).json({ error: "Question parameter is required" });
