@@ -121,9 +121,9 @@ Layout structure, overflow prevention, and mobile navigation were verified acros
 | 37 | `TC-API-008` | **API Integration** | POST /api/query after clear returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
 | 38 | `TC-API-009` | **API Integration** | POST /api/chart after clear returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
 | 39 | `TC-API-010` | **API Integration** | POST /api/upload with empty rows returns 400 Bad Request | `HTTP 400` | `HTTP 400` | 🟢 PASS |
-| 40 | `TC-LARGE-001` | **Scale & Performance** | Ingest 100,000 rows in memory | `100,000 rows` | `100000 rows (410.6ms)` | 🟢 PASS |
-| 41 | `TC-LARGE-002` | **Scale & Performance** | 100k row GroupBy Aggregation completes in < 250ms | `< 250ms and >= 5 breakdown rows` | `48.7ms (5 rows)` | 🟢 PASS |
-| 42 | `TC-LARGE-003` | **Scale & Performance** | 100k row descriptive stats in < 300ms | `< 300ms` | `263.9ms` | 🟢 PASS |
+| 40 | `TC-LARGE-001` | **Scale & Performance** | Ingest 100,000 rows in memory | `100,000 rows` | `100000 rows (419.0ms)` | 🟢 PASS |
+| 41 | `TC-LARGE-002` | **Scale & Performance** | 100k row GroupBy Aggregation completes in < 250ms | `< 250ms and >= 5 breakdown rows` | `52.3ms (5 rows)` | 🟢 PASS |
+| 42 | `TC-LARGE-003` | **Scale & Performance** | 100k row descriptive stats in < 300ms | `< 300ms` | `273.6ms` | 🟢 PASS |
 | 43 | `TC-CONTRACT-1` | **Contract Invariants** | Query Contract: "What is total sales by region?" | `Valid contract with answer, table, calculation, time` | `Answer (126 chars), Table (4 rows)` | 🟢 PASS |
 | 44 | `TC-CONTRACT-2` | **Contract Invariants** | Query Contract: "What is average profit by product category?" | `Valid contract with answer, table, calculation, time` | `Answer (131 chars), Table (5 rows)` | 🟢 PASS |
 | 45 | `TC-CONTRACT-3` | **Contract Invariants** | Query Contract: "Show top 5 products by revenue" | `Valid contract with answer, table, calculation, time` | `Answer (104 chars), Table (5 rows)` | 🟢 PASS |

@@ -28,7 +28,127 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSample, setLoadingSample] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadCSV = (tableData: Record<string, any>[], filename?: string) => {
+    if (!tableData || tableData.length === 0) return;
+    const cleanFilename = filename || `DataSage_Analysis_${new Date().toISOString().replace(/[:.]/g, '_')}.csv`;
+    const headers = Object.keys(tableData[0]);
+    const csvRows = [
+      headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+      ...tableData.map((row) =>
+        headers
+          .map((header) => {
+            const val = row[header];
+            if (val === null || val === undefined) return '""';
+            return `"${String(val).replace(/"/g, '""')}"`;
+          })
+          .join(',')
+      )
+    ];
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', cleanFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadJSON = (result: QueryResult, filename?: string) => {
+    const cleanFilename = filename || `DataSage_Analysis_${new Date().toISOString().replace(/[:.]/g, '_')}.json`;
+    const jsonStr = JSON.stringify(result, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', cleanFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadReport = (msg: ChatMessage, filename?: string) => {
+    if (!msg.result) return;
+    const cleanFilename = filename || `DataSage_Report_${new Date().toISOString().replace(/[:.]/g, '_')}.md`;
+    const headers = msg.result.table && msg.result.table.length > 0 ? Object.keys(msg.result.table[0]) : [];
+    const tableMd = msg.result.table && msg.result.table.length > 0
+      ? [
+          `| ${headers.join(' | ')} |`,
+          `| ${headers.map(() => '---').join(' | ')} |`,
+          ...msg.result.table.map((row) => `| ${headers.map((h) => row[h] ?? '').join(' | ')} |`)
+        ].join('\n')
+      : 'No tabular records.';
+
+    const mdContent = `# 📊 DataSage AI Analysis Report
+**Generated:** ${new Date().toLocaleString()}  
+**Dataset:** ${activeDataset?.name || 'Active Dataset'} (${activeDataset?.rowCount.toLocaleString() || 0} rows)
+
+---
+
+## 💬 Insight Summary
+${msg.text}
+
+---
+
+## 📋 Computed Result Table
+${tableMd}
+
+---
+
+## ⚙️ Computation Details
+- **Methodology:** ${msg.result.calculation}
+- **Records Processed:** ${msg.result.rowsUsed.toLocaleString()} rows
+- **Execution Latency:** ${msg.result.executionTimeMs} ms
+
+---
+
+## 🐍 Python Pandas Query
+\`\`\`python
+${msg.result.pythonCode}
+\`\`\`
+`;
+
+    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', cleanFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyTable = (tableData: Record<string, any>[], msgId: string) => {
+    if (!tableData || tableData.length === 0) return;
+    const headers = Object.keys(tableData[0]);
+    const tsv = [
+      headers.join('\t'),
+      ...tableData.map((row) => headers.map((h) => row[h] ?? '').join('\t'))
+    ].join('\n');
+    navigator.clipboard.writeText(tsv);
+    setCopiedId(msgId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDownloadScript = (code: string, filename?: string) => {
+    if (!code) return;
+    const cleanFilename = filename || `DataSage_Query_${Date.now()}.py`;
+    const blob = new Blob([code], { type: 'text/x-python;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', cleanFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     fetchDatasetPreview()
@@ -245,12 +365,77 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
 
                     {msg.result && (
                       <div className="space-y-4 bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-xs">
+                        {/* Analysis Header & Download Action Toolbar */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="text-xs font-bold text-[#0F172A] tracking-tight uppercase">Analysis Complete</span>
+                          </div>
+                          
+                          {/* Download & Export Options */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {msg.result.table && msg.result.table.length > 0 && (
+                              <>
+                                <button
+                                  onClick={() => handleDownloadCSV(msg.result!.table, `DataSage_${activeDataset?.name.replace(/\.[^/.]+$/, '')}_${Date.now()}.csv`)}
+                                  title="Download structured result table as CSV"
+                                  className="px-2.5 py-1.5 bg-[#eff4ff] hover:bg-[#dbeafe] text-[#004ac6] rounded-lg text-xs font-semibold transition-all flex items-center gap-1 active:scale-95 border border-[#bfdbfe]"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">download</span>
+                                  <span>Download CSV</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDownloadJSON(msg.result!, `DataSage_${activeDataset?.name.replace(/\.[^/.]+$/, '')}_${Date.now()}.json`)}
+                                  title="Download full analysis payload as JSON"
+                                  className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#475569] rounded-lg text-xs font-medium transition-all flex items-center gap-1 active:scale-95 border border-[#E2E8F0]"
+                                >
+                                  <span className="material-symbols-outlined text-[16px] text-[#0891B2]">data_object</span>
+                                  <span>JSON</span>
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handleDownloadReport(msg, `DataSage_Report_${activeDataset?.name.replace(/\.[^/.]+$/, '')}_${Date.now()}.md`)}
+                              title="Download complete formatted Markdown report"
+                              className="px-2.5 py-1.5 bg-[#004ac6] hover:brightness-110 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1 active:scale-95 shadow-xs"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">description</span>
+                              <span>Export Report</span>
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Result Table */}
                         {msg.result.table && msg.result.table.length > 0 && (
                           <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
                             <div className="bg-[#F8FAFC] px-3 py-2 border-b border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#64748B]">
-                              <span>Computed Result Data</span>
-                              <span>{msg.result.table.length} Rows</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[#0F172A]">Computed Result Data</span>
+                                <span className="px-1.5 py-0.5 bg-[#E2E8F0] text-[#475569] rounded-md text-[10px] font-semibold">
+                                  {msg.result.table.length} Rows
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleDownloadCSV(msg.result!.table, `DataSage_Table_${Date.now()}.csv`)}
+                                  className="text-[11px] text-[#004ac6] hover:underline flex items-center gap-1 font-medium"
+                                  title="Download Table CSV"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">download</span>
+                                  <span>CSV</span>
+                                </button>
+                                <span className="text-[#CBD5E1]">|</span>
+                                <button
+                                  onClick={() => handleCopyTable(msg.result!.table, msg.id)}
+                                  className="text-[11px] text-[#64748B] hover:text-[#0F172A] flex items-center gap-1 font-medium"
+                                  title="Copy tabular data to clipboard"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">
+                                    {copiedId === msg.id ? 'check' : 'content_copy'}
+                                  </span>
+                                  <span>{copiedId === msg.id ? 'Copied!' : 'Copy'}</span>
+                                </button>
+                              </div>
                             </div>
                             <div className="overflow-x-auto max-h-60 custom-scrollbar">
                               <table className="w-full text-left border-collapse text-xs">
@@ -319,15 +504,37 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
                         {/* Python Code Snippet */}
                         <div className="bg-[#0F172A] rounded-xl p-3 text-white text-xs font-['JetBrains_Mono'] relative group">
                           <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1 border-b border-slate-700 pb-1">
-                            <span>Pandas Execution Code</span>
-                            <button
-                              onClick={() => navigator.clipboard.writeText(msg.result?.pythonCode || '')}
-                              className="hover:text-white underline"
-                            >
-                              Copy
-                            </button>
+                            <span className="flex items-center gap-1 font-semibold text-slate-300">
+                              <span className="material-symbols-outlined text-[12px] text-emerald-400">code</span>
+                              <span>Pandas Execution Blueprint</span>
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleDownloadScript(msg.result?.pythonCode || '')}
+                                className="hover:text-emerald-400 text-slate-400 flex items-center gap-0.5 transition-colors"
+                                title="Download .py script"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">download</span>
+                                <span>.py</span>
+                              </button>
+                              <span className="text-slate-600">|</span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.result?.pythonCode || '');
+                                  setCopiedId(`py-${msg.id}`);
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className="hover:text-white text-slate-400 flex items-center gap-0.5 transition-colors"
+                                title="Copy code"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">
+                                  {copiedId === `py-${msg.id}` ? 'check' : 'content_copy'}
+                                </span>
+                                <span>{copiedId === `py-${msg.id}` ? 'Copied' : 'Copy'}</span>
+                              </button>
+                            </div>
                           </div>
-                          <pre className="overflow-x-auto text-emerald-400 pt-1">{msg.result.pythonCode}</pre>
+                          <pre className="overflow-x-auto text-emerald-400 pt-1 text-[11px] leading-relaxed">{msg.result.pythonCode}</pre>
                         </div>
                       </div>
                     )}
