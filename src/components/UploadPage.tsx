@@ -188,22 +188,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
               <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-lg text-[#0F172A] mb-1">
                 Click to upload or drag and drop spreadsheet
               </h3>
-              <p className="text-xs sm:text-sm text-[#64748B] mb-3">
+              <p className="text-xs sm:text-sm text-[#64748B]">
                 Supported formats: CSV, XLS, XLSX (Max 100MB)
               </p>
-
-              {/* In-Drop-Zone Quick Download Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  downloadSampleCSV('sales_data');
-                }}
-                className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-[#CBD5E1] hover:border-[#004ac6] hover:bg-blue-50 text-xs font-semibold text-[#004ac6] shadow-xs transition-all"
-              >
-                <span className="material-symbols-outlined text-sm">download</span>
-                <span>Download Sample File (Sales_Report.csv)</span>
-              </button>
             </div>
 
             {/* Quick Sample File Download Bar */}
