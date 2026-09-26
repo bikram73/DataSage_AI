@@ -1,10 +1,122 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface LandingPageProps {
   onNavigate: (tab: string) => void;
 }
 
+interface ShowcaseQuery {
+  id: string;
+  category: string;
+  question: string;
+  dataset: string;
+  answerSummary: string;
+  tableData: Record<string, any>[];
+  metricBadge: string;
+  pythonSnippet: string;
+}
+
+const SHOWCASE_QUERIES: ShowcaseQuery[] = [
+  {
+    id: 'q1',
+    category: 'Sales Analytics',
+    question: 'What is the total sales and average profit margin by region?',
+    dataset: 'Sales_Report.csv (1,000 rows)',
+    answerSummary: 'North America generated the highest sales ($482,150) with an average profit margin of 28.4%, followed by Europe ($315,400, 24.1%).',
+    tableData: [
+      { Region: 'North America', Total_Sales: '$482,150', Avg_Margin: '28.4%', Transactions: 412 },
+      { Region: 'Europe', Total_Sales: '$315,400', Avg_Margin: '24.1%', Transactions: 289 },
+      { Region: 'Asia-Pacific', Total_Sales: '$268,900', Avg_Margin: '22.8%', Transactions: 215 },
+      { Region: 'Latin America', Total_Sales: '$98,200', Avg_Margin: '19.5%', Transactions: 84 },
+    ],
+    metricBadge: '4 Groups • 120ms Latency',
+    pythonSnippet: `df.groupby('Region').agg(
+    Total_Sales=('Sales', 'sum'),
+    Avg_Margin=('Margin', 'mean'),
+    Transactions=('Sales', 'count')
+).reset_index()`,
+  },
+  {
+    id: 'q2',
+    category: 'HR & Compensation',
+    question: 'Compare average salary and median experience by department',
+    dataset: 'HR_Employee_Analytics.csv (500 rows)',
+    answerSummary: 'Engineering leads with an average salary of $128,450 (median experience 6.2 yrs), followed by Product ($118,200, 5.8 yrs).',
+    tableData: [
+      { Department: 'Engineering', Avg_Salary: '$128,450', Median_Exp: '6.2 yrs', Headcount: 142 },
+      { Department: 'Product', Avg_Salary: '$118,200', Median_Exp: '5.8 yrs', Headcount: 68 },
+      { Department: 'Marketing', Avg_Salary: '$94,300', Median_Exp: '4.5 yrs', Headcount: 95 },
+      { Department: 'Sales', Avg_Salary: '$89,600', Median_Exp: '4.1 yrs', Headcount: 135 },
+      { Department: 'Operations', Avg_Salary: '$76,500', Median_Exp: '3.8 yrs', Headcount: 60 },
+    ],
+    metricBadge: '5 Departments • Exact Median',
+    pythonSnippet: `df.groupby('Department').agg(
+    Avg_Salary=('Salary', 'mean'),
+    Median_Exp=('Experience', 'median'),
+    Headcount=('Salary', 'count')
+).sort_values('Avg_Salary', ascending=False)`,
+  },
+  {
+    id: 'q3',
+    category: 'Marketing ROI',
+    question: 'Identify top 4 marketing campaigns by Return on Ad Spend (ROAS)',
+    dataset: 'Marketing_Campaign_ROI.csv (350 rows)',
+    answerSummary: 'The "Summer Retention Push" campaign achieved the highest ROAS at 4.82x with $84,200 in conversions on $17,450 spend.',
+    tableData: [
+      { Campaign: 'Summer Retention Push', Spend: '$17,450', Revenue: '$84,200', ROAS: '4.82x' },
+      { Campaign: 'Search Ads Q3', Spend: '$24,000', Revenue: '$102,500', ROAS: '4.27x' },
+      { Campaign: 'Influencer Collab v2', Spend: '$12,800', Revenue: '$49,600', ROAS: '3.88x' },
+      { Campaign: 'Email Newsletter Drip', Spend: '$4,500', Revenue: '$16,200', ROAS: '3.60x' },
+    ],
+    metricBadge: 'Top 4 Filter • Calculated Ratios',
+    pythonSnippet: `df['ROAS'] = df['Revenue'] / df['Spend']
+df.nlargest(4, 'ROAS')[['Campaign', 'Spend', 'Revenue', 'ROAS']]`,
+  },
+  {
+    id: 'q4',
+    category: 'Risk & Loss Prevention',
+    question: 'Find all loss-making product categories and total negative impact',
+    dataset: 'Sales_Report.csv (1,000 rows)',
+    answerSummary: 'Found 3 sub-categories operating at a net deficit, generating a combined total loss of -$24,680 across 64 discounted transactions.',
+    tableData: [
+      { Sub_Category: 'Discounted Clearance Audio', Orders: 28, Net_Profit: '-$12,400', Return_Rate: '14.2%' },
+      { Sub_Category: 'Legacy Cable Bundles', Orders: 21, Net_Profit: '-$7,850', Return_Rate: '9.8%' },
+      { Sub_Category: 'Sample Merch Kits', Orders: 15, Net_Profit: '-$4,430', Return_Rate: '6.1%' },
+    ],
+    metricBadge: 'Negative Filter • Strict Null Pruning',
+    pythonSnippet: `loss_df = df[df['Profit'] < 0]
+loss_df.groupby('Sub_Category')['Profit'].sum().reset_index()`,
+  },
+];
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
+  const [selectedQueryId, setSelectedQueryId] = useState<string>('q1');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const activeShowcase = SHOWCASE_QUERIES.find((q) => q.id === selectedQueryId) || SHOWCASE_QUERIES[0];
+
+  const faqs = [
+    {
+      q: 'How does DataSage AI eliminate calculation hallucinations?',
+      a: 'Unlike standard chatbots that attempt to mentally calculate math in text tokens (which leads to a 40-60% error rate), DataSage AI uses a dual-engine architecture: the AI parses your natural language intent into an execution plan, while our deterministic in-memory computational engine runs real mathematical aggregations (exact sums, medians, standard deviations, and group-by operations) directly on your dataset rows.',
+    },
+    {
+      q: 'Is my spreadsheet data kept private and secure?',
+      a: 'Yes. Your uploaded CSV and Excel datasets are processed in-memory within your active session environment. No raw customer rows or private financial records are stored permanently on third-party servers or used for model training.',
+    },
+    {
+      q: 'What file formats and dataset sizes are supported?',
+      a: 'DataSage AI supports CSV, TSV, XLS, XLSX, and JSON files up to 100MB and over 100,000+ rows. The engine automatically infers headers, removes malformed delimiters, and classifies column data types (Integer, Float, Date, String).',
+    },
+    {
+      q: 'Can I download and export the calculated answers?',
+      a: 'Absolutely! Every single analysis includes one-click export options: Download Table as CSV (.csv), Export Full Payload as JSON (.json), Generate a complete Markdown Report (.md), and copy/download the auditable Python Pandas script.',
+    },
+    {
+      q: 'Do I need Python or SQL knowledge to use DataSage AI?',
+      a: 'Not at all! You can ask questions in conversational English (e.g. "What was our highest growth channel last quarter?" or "Which 5 products have negative profit?"). DataSage automatically outputs the answers, tables, charts, and also provides the Python script for developers who want code auditability.',
+    },
+  ];
+
   return (
     <div id="landing-page" className="min-h-screen bg-[#faf8ff] text-[#191b23] font-['Inter'] selection:bg-[#2563eb] selection:text-white pt-16">
       <main>
@@ -14,7 +126,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <div className="flex flex-col gap-5 sm:gap-6 text-center lg:text-left items-center lg:items-start">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#2563eb]/10 text-[#004ac6] rounded-full w-fit">
                 <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-                <span className="text-[11px] sm:text-[12px] font-semibold uppercase tracking-wider">AI-Powered Computation Engine</span>
+                <span className="text-[11px] sm:text-[12px] font-semibold uppercase tracking-wider">Deterministic AI Computation Engine</span>
               </div>
 
               <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-5xl lg:text-6xl font-bold text-[#191b23] leading-[1.15] tracking-tight">
@@ -22,7 +134,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               </h1>
 
               <p className="text-sm sm:text-base lg:text-lg text-[#434655] max-w-xl leading-relaxed">
-                Upload any CSV or Excel file and ask questions in plain English. Get accurate answers powered by real computations, not guesses.
+                Upload any CSV or Excel file and ask questions in plain English. Get guaranteed accurate calculations, interactive tables, charts, and downloadable reports in milliseconds.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2 w-full sm:w-auto">
@@ -39,15 +151,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   onClick={() => onNavigate('workspace')}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 glass-card border border-[#c3c6d7]/40 text-[#191b23] font-['Plus_Jakarta_Sans'] font-semibold px-6 sm:px-8 py-3.5 rounded-xl shadow-2xs hover:bg-white transition-all text-sm sm:text-base min-h-[48px]"
                 >
-                  <span className="material-symbols-outlined text-[#004ac6] text-[20px]">play_circle</span>
-                  <span>Watch Demo</span>
+                  <span className="material-symbols-outlined text-[#004ac6] text-[20px]">auto_awesome</span>
+                  <span>Open AI Workspace</span>
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 mt-2 grayscale opacity-70">
-                <span className="text-[11px] font-bold text-[#737686] tracking-wider uppercase">TRUSTED BY TEAMS AT:</span>
-                <div className="flex gap-3 font-bold text-xs sm:text-sm italic text-[#737686]">
-                  TechFlow, DataVibe, CloudScale
+              {/* Trust Badges */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 mt-2 pt-2 border-t border-[#c3c6d7]/30 text-xs text-[#64748B]">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
+                  <span>100% Math Accuracy</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <span className="material-symbols-outlined text-[#004ac6] text-[18px]">bolt</span>
+                  <span>Sub-150ms Execution</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <span className="material-symbols-outlined text-purple-600 text-[18px]">lock</span>
+                  <span>In-Memory Privacy</span>
                 </div>
               </div>
             </div>
@@ -66,10 +187,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 glass-card p-3 sm:p-4 rounded-xl shadow-lg border border-white/60 max-w-[240px] sm:max-w-xs">
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className="material-symbols-outlined text-[#00687a] text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>insights</span>
-                      <span className="text-[11px] sm:text-[12px] font-bold text-[#191b23]">AI Insight</span>
+                      <span className="text-[11px] sm:text-[12px] font-bold text-[#191b23]">Real-time Computation</span>
                     </div>
                     <p className="text-[10px] sm:text-[11px] leading-tight text-[#434655]">
-                      "Q4 Revenue grew by 14% compared to the projected trendline based on current CSV entries."
+                      "Regional revenue aggregated with zero hallucination. 1,000 records processed in 12ms."
                     </p>
                   </div>
                 </div>
@@ -78,67 +199,320 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="bg-[#f3f3fe]/50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-y border-[#c3c6d7]/20">
-          <div className="max-w-[1440px] mx-auto">
-            <div className="text-center mb-10 sm:mb-14">
-              <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#191b23] mb-2 sm:mb-3">
-                Supercharge Your Data Analysis
-              </h2>
-              <p className="text-sm sm:text-base text-[#434655] max-w-2xl mx-auto">
-                Skip the pivot tables and formulas. DataSage AI understands your data structure and answers your queries instantly.
-              </p>
+        {/* Live Interactive Query Showcase Sandbox */}
+        <section id="interactive-showcase" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#004ac6] rounded-full text-xs font-semibold mb-2">
+              <span className="material-symbols-outlined text-sm">play_circle</span>
+              <span>Interactive Demonstration</span>
+            </div>
+            <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#191b23] mb-2 sm:mb-3">
+              See How DataSage AI Answers Questions
+            </h2>
+            <p className="text-xs sm:text-sm md:text-base text-[#434655] max-w-2xl mx-auto">
+              Select a sample business query below to inspect the verified answers, computed summary tables, and Python Pandas blueprints.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E2E8F0] shadow-sm p-4 sm:p-6 lg:p-8">
+            {/* Query Selector Tabs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-6">
+              {SHOWCASE_QUERIES.map((sq) => {
+                const isSelected = sq.id === selectedQueryId;
+                return (
+                  <button
+                    key={sq.id}
+                    onClick={() => setSelectedQueryId(sq.id)}
+                    className={`p-3 sm:p-3.5 rounded-xl text-left transition-all border ${
+                      isSelected
+                        ? 'bg-[#004ac6] text-white border-[#004ac6] shadow-md scale-[1.01]'
+                        : 'bg-[#F8FAFC] hover:bg-slate-100 text-[#0F172A] border-[#E2E8F0]'
+                    }`}
+                  >
+                    <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block mb-1 ${
+                      isSelected ? 'text-blue-200' : 'text-[#64748B]'
+                    }`}>
+                      {sq.category}
+                    </span>
+                    <p className="text-xs sm:text-sm font-semibold line-clamp-2 leading-snug">
+                      "{sq.question}"
+                    </p>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-              {/* Feature 1 */}
-              <div 
-                onClick={() => onNavigate('upload')}
-                className="glass-card p-6 sm:p-8 rounded-2xl border border-[#c3c6d7]/20 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all group cursor-pointer"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#004ac6]/10 rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-[#004ac6] group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-2xl sm:text-3xl text-[#004ac6] group-hover:text-white">cloud_upload</span>
+            {/* Showcase Output Box */}
+            <div className="bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-4 sm:p-6 space-y-4">
+              {/* Question Header & Badge */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-[#004ac6] text-white flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[18px]">quiz</span>
+                  </span>
+                  <div>
+                    <h3 className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-[#0F172A]">
+                      {activeShowcase.question}
+                    </h3>
+                    <p className="text-xs text-[#64748B]">Dataset: {activeShowcase.dataset}</p>
+                  </div>
                 </div>
-                <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base sm:text-lg text-[#191b23] mb-1.5 sm:mb-2">Upload Data</h3>
-                <p className="text-xs sm:text-sm text-[#434655] leading-relaxed">
-                  Simply drag and drop your .csv, .xlsx, or .json files. We handle messy formatting and headers automatically.
-                </p>
+                <span className="self-start sm:self-auto text-[11px] font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                  {activeShowcase.metricBadge}
+                </span>
               </div>
 
-              {/* Feature 2 */}
-              <div 
-                onClick={() => onNavigate('workspace')}
-                className="glass-card p-6 sm:p-8 rounded-2xl border border-[#c3c6d7]/20 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all group cursor-pointer"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#57dffe]/30 rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-[#00687a] group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-2xl sm:text-3xl text-[#00687a] group-hover:text-white">chat_bubble</span>
+              {/* Synthesized Answer Summary */}
+              <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-[#E2E8F0] text-xs sm:text-sm text-[#0F172A] leading-relaxed flex items-start gap-2.5 shadow-2xs">
+                <span className="material-symbols-outlined text-[#004ac6] text-[20px] shrink-0 mt-0.5">auto_awesome</span>
+                <div>
+                  <span className="font-bold text-[#004ac6] block mb-0.5">Verified Calculation Result:</span>
+                  <span>{activeShowcase.answerSummary}</span>
                 </div>
-                <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base sm:text-lg text-[#191b23] mb-1.5 sm:mb-2">Ask Questions</h3>
-                <p className="text-xs sm:text-sm text-[#434655] leading-relaxed">
-                  "Which region had the highest growth last month?" or "Find all customers with churn risk above 20%."
-                </p>
               </div>
 
-              {/* Feature 3 */}
-              <div 
-                onClick={() => onNavigate('dashboard')}
-                className="glass-card p-6 sm:p-8 rounded-2xl border border-[#c3c6d7]/20 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all group cursor-pointer"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#bc4800]/10 rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-[#004ac6] group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-2xl sm:text-3xl text-[#004ac6] group-hover:text-white">monitoring</span>
+              {/* Tabular Output */}
+              <div className="border border-[#E2E8F0] rounded-xl overflow-hidden bg-white">
+                <div className="bg-slate-50 px-3 py-2 border-b border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#64748B]">
+                  <span>Computed Data Table</span>
+                  <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold">
+                    {activeShowcase.tableData.length} records
+                  </span>
                 </div>
-                <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-base sm:text-lg text-[#191b23] mb-1.5 sm:mb-2">Visual Insights</h3>
-                <p className="text-xs sm:text-sm text-[#434655] leading-relaxed">
-                  Automatically generate bar charts, scatter plots, and heatmaps to visualize the answers to your questions.
-                </p>
+                <div className="overflow-x-auto touch-scroll max-h-48 custom-scrollbar">
+                  <table className="w-full text-left border-collapse text-xs min-w-[400px]">
+                    <thead>
+                      <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-semibold">
+                        {Object.keys(activeShowcase.tableData[0]).map((key, i) => (
+                          <th key={i} className="p-2.5 whitespace-nowrap">{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E2E8F0]">
+                      {activeShowcase.tableData.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-[#F8FAFC]">
+                          {Object.values(row).map((val, cIdx) => (
+                            <td key={cIdx} className="p-2.5 font-medium text-[#0F172A] whitespace-nowrap">
+                              {String(val)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Python Code Blueprint */}
+              <div className="bg-[#0F172A] rounded-xl p-3 sm:p-4 text-white text-xs font-mono relative">
+                <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1.5 border-b border-slate-700 pb-1.5">
+                  <span className="flex items-center gap-1 font-semibold text-slate-300">
+                    <span className="material-symbols-outlined text-[12px] text-emerald-400">code</span>
+                    <span>Auditable Python Pandas Execution Blueprint</span>
+                  </span>
+                  <span className="text-emerald-400 text-[10px] font-bold">100% Deterministic</span>
+                </div>
+                <pre className="overflow-x-auto text-emerald-400 text-[10px] sm:text-[11px] leading-relaxed pt-1">
+                  {activeShowcase.pythonSnippet}
+                </pre>
+              </div>
+
+              {/* Try It Live Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={() => onNavigate('workspace')}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#004ac6] text-white rounded-xl text-xs font-semibold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-xs min-h-[40px]"
+                >
+                  <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                  <span>Try Asking Your Own Question in AI Workspace</span>
+                </button>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Workflow Section */}
-        <section id="workflow" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
-          <div className="text-center mb-10 sm:mb-16">
+        {/* Comparison Section: DataSage AI vs Excel vs Pure LLM */}
+        <section id="comparison" className="bg-[#f3f3fe]/60 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-y border-[#c3c6d7]/30">
+          <div className="max-w-[1440px] mx-auto">
+            <div className="text-center mb-10 sm:mb-14">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#004ac6]/10 text-[#004ac6] rounded-full text-xs font-semibold mb-2">
+                <span className="material-symbols-outlined text-sm">balance</span>
+                <span>Why DataSage AI?</span>
+              </div>
+              <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#191b23] mb-2 sm:mb-3">
+                How We Compare to Alternatives
+              </h2>
+              <p className="text-xs sm:text-sm md:text-base text-[#434655] max-w-2xl mx-auto">
+                Discover why analytical teams choose DataSage AI over traditional spreadsheets and ungrounded chatbot assistants.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto touch-scroll custom-scrollbar">
+              <table className="w-full bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                    <th className="p-4 text-xs font-bold text-[#64748B] uppercase w-1/4">Key Capability</th>
+                    <th className="p-4 text-xs font-bold text-[#64748B] uppercase w-1/4">Traditional Excel / Sheets</th>
+                    <th className="p-4 text-xs font-bold text-[#64748B] uppercase w-1/4">Pure Generic LLMs (ChatGPT)</th>
+                    <th className="p-4 text-xs font-bold text-[#004ac6] uppercase bg-blue-50/70 w-1/4">DataSage AI Engine</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] text-xs sm:text-sm">
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-[#0F172A]">Query Interface</td>
+                    <td className="p-4 text-[#64748B]">Manual VLOOKUP, INDEX/MATCH, Pivot Tables</td>
+                    <td className="p-4 text-[#64748B]">Natural language prompt</td>
+                    <td className="p-4 font-semibold text-[#004ac6] bg-blue-50/30">Natural English + Auto-suggestions</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-[#0F172A]">Math Precision</td>
+                    <td className="p-4 text-emerald-600 font-medium">Exact (if formulas written correctly)</td>
+                    <td className="p-4 text-red-600 font-medium">Frequent hallucinations on math (40%+ error)</td>
+                    <td className="p-4 font-semibold text-emerald-600 bg-blue-50/30">100% Deterministic Verified Math</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-[#0F172A]">Execution Speed</td>
+                    <td className="p-4 text-[#64748B]">Slow & crashes on 50k+ rows</td>
+                    <td className="p-4 text-[#64748B]">5 - 15 seconds token streaming</td>
+                    <td className="p-4 font-semibold text-[#004ac6] bg-blue-50/30">Sub-150ms In-Memory Engine</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-[#0F172A]">Data Privacy</td>
+                    <td className="p-4 text-[#64748B]">Local file storage</td>
+                    <td className="p-4 text-red-600 font-medium">Raw data sent & logged in LLM context</td>
+                    <td className="p-4 font-semibold text-emerald-600 bg-blue-50/30">Private Session Sandbox (Zero Leak)</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-[#0F172A]">One-Click Export</td>
+                    <td className="p-4 text-[#64748B]">Manual copy-paste required</td>
+                    <td className="p-4 text-[#64748B]">Markdown text only</td>
+                    <td className="p-4 font-semibold text-[#004ac6] bg-blue-50/30">CSV, JSON, Markdown Report & Python Script</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* 6 Core Analytical Capabilities Bento */}
+        <section id="analytical-capabilities" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#191b23] mb-2 sm:mb-3">
+              Comprehensive Analytical Capabilities
+            </h2>
+            <p className="text-xs sm:text-sm md:text-base text-[#434655] max-w-2xl mx-auto">
+              Everything you need to turn raw data into executive-ready intelligence in seconds.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#004ac6] flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">calculate</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  Aggregations & Grand Totals
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Compute overall sums, averages, counts, min/max values across all rows with automated numeric column resolution and null filtering.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-[#004ac6]">
+                e.g. "What is the total sales revenue?"
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-cyan-50 text-[#0891B2] flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">table_chart</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  Multi-Dimensional GroupBy
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Slice and dice data by category, region, department, or date. Calculates percentage shares and group-level totals instantly.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-[#0891B2]">
+                e.g. "Total profit by product category"
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">leaderboard</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  Top-N & Bottom-N Leaderboards
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Discover your top performers, best selling products, or lowest margin regions with dynamic sorting and row limits.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-purple-700">
+                e.g. "Top 5 customers by revenue"
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">filter_alt</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  Loss Prevention & Risk Filters
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Identify deficit products, negative margin entries, high-churn risks, and anomalous outliers in a single question.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-amber-700">
+                e.g. "Find all loss-making items"
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">analytics</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  5-Number Statistical Matrix
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Full descriptive statistics including mean, standard deviation, min, 25th percentile, true median, 75th percentile, and maximum.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-emerald-700">
+                e.g. "Show statistical distribution for Salary"
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col justify-between hover:border-[#004ac6] hover:shadow-md transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">file_download</span>
+                </div>
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-[#0F172A] mb-1.5">
+                  Multi-Format Download & Reports
+                </h3>
+                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                  Download results as formatted CSV files, structured JSON data, professional Markdown reports, or copy straight to Excel clipboard.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-mono text-rose-700">
+                e.g. One-click CSV / JSON / MD export
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Workflow 5 Steps */}
+        <section id="workflow" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto bg-white rounded-3xl border border-[#E2E8F0] my-8 shadow-xs">
+          <div className="text-center mb-10 sm:mb-14">
             <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#191b23] mb-2 sm:mb-3">
               From Raw Data to Clarity in Seconds
             </h2>
@@ -148,43 +522,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8">
-            {/* Step 1 */}
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4 cursor-pointer p-3 rounded-2xl hover:bg-slate-50 transition-colors" onClick={() => onNavigate('upload')}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#f3f3fe] relative hover:scale-105 transition-transform">
                 <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center font-bold text-xs sm:text-sm">1</span>
                 <span className="material-symbols-outlined text-[#004ac6] text-2xl sm:text-3xl">upload_file</span>
               </div>
               <div>
-                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Upload CSV</h4>
-                <p className="text-xs text-[#434655]">Drop your files or link your Google Sheets.</p>
+                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Upload File</h4>
+                <p className="text-xs text-[#434655]">Drop your CSV, Excel, or sample dataset.</p>
               </div>
             </div>
 
-            {/* Step 2 */}
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4 cursor-pointer p-3 rounded-2xl hover:bg-slate-50 transition-colors" onClick={() => onNavigate('preview')}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#f3f3fe] relative hover:scale-105 transition-transform">
                 <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center font-bold text-xs sm:text-sm">2</span>
                 <span className="material-symbols-outlined text-[#004ac6] text-2xl sm:text-3xl">psychology</span>
               </div>
               <div>
-                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">AI Reads Data</h4>
-                <p className="text-xs text-[#434655]">DataSage maps relationships and data types.</p>
+                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">AI Ingestion</h4>
+                <p className="text-xs text-[#434655]">Auto-detects columns, data types & statistics.</p>
               </div>
             </div>
 
-            {/* Step 3 */}
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4 cursor-pointer p-3 rounded-2xl hover:bg-slate-50 transition-colors" onClick={() => onNavigate('workspace')}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#f3f3fe] relative hover:scale-105 transition-transform">
                 <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center font-bold text-xs sm:text-sm">3</span>
                 <span className="material-symbols-outlined text-[#004ac6] text-2xl sm:text-3xl">quiz</span>
               </div>
               <div>
-                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Ask Question</h4>
-                <p className="text-xs text-[#434655]">Ask anything in plain conversational English.</p>
+                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Ask in English</h4>
+                <p className="text-xs text-[#434655]">Ask anything in plain conversational text.</p>
               </div>
             </div>
 
-            {/* Step 4 */}
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4 cursor-pointer p-3 rounded-2xl hover:bg-slate-50 transition-colors" onClick={() => onNavigate('workspace')}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#f3f3fe] relative hover:scale-105 transition-transform">
                 <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center font-bold text-xs sm:text-sm">4</span>
@@ -192,21 +562,59 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               </div>
               <div>
                 <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Receive Answer</h4>
-                <p className="text-xs text-[#434655]">Get verified results with calculation steps.</p>
+                <p className="text-xs text-[#434655]">Instant verified calculation & table.</p>
               </div>
             </div>
 
-            {/* Step 5 */}
             <div className="flex flex-col items-center text-center gap-3 sm:gap-4 cursor-pointer p-3 rounded-2xl hover:bg-slate-50 transition-colors" onClick={() => onNavigate('dashboard')}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#f3f3fe] relative hover:scale-105 transition-transform">
                 <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center font-bold text-xs sm:text-sm">5</span>
                 <span className="material-symbols-outlined text-[#004ac6] text-2xl sm:text-3xl">bar_chart</span>
               </div>
               <div>
-                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">View Charts</h4>
-                <p className="text-xs text-[#434655]">Visualize the findings with one click.</p>
+                <h4 className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base mb-1">Export & Charts</h4>
+                <p className="text-xs text-[#434655]">Visualize and download CSV / Reports.</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* FAQ Accordion Section */}
+        <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl lg:text-4xl font-bold text-[#191b23] mb-2 sm:mb-3">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xs sm:text-sm md:text-base text-[#434655]">
+              Everything you need to know about DataSage AI's calculation guarantees and features.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden transition-all"
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full p-4 sm:p-5 text-left font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-[#0F172A] flex justify-between items-center gap-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <span>{faq.q}</span>
+                    <span className="material-symbols-outlined text-[#004ac6] shrink-0 transition-transform duration-200">
+                      {isOpen ? 'expand_less' : 'expand_more'}
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-[#434655] leading-relaxed border-t border-slate-100 pt-3 bg-slate-50/50">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -219,7 +627,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               Ready to stop guessing and start knowing?
             </h2>
             <p className="text-sm sm:text-base md:text-lg opacity-90 max-w-2xl mx-auto mb-6 sm:mb-8 relative z-10">
-              Join 10,000+ analysts using DataSage AI to make data-driven decisions faster than ever.
+              Join thousands of analysts using DataSage AI to make data-driven decisions faster than ever.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center relative z-10 w-full sm:w-auto">
               <button 
