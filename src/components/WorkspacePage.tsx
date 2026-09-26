@@ -176,9 +176,9 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div id="workspace-page" className="w-full flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
+    <div id="workspace-page" className="w-full flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
       {/* Central Chat Interface */}
-      <section className="flex-1 flex flex-col h-full bg-white relative border-r border-[#E2E8F0] overflow-hidden">
+      <section className="flex-1 flex flex-col h-full bg-white relative overflow-hidden">
         {/* Chat Header */}
         <header className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-4 sm:px-6 shrink-0 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-3">
@@ -199,6 +199,13 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
             >
               <span className="material-symbols-outlined text-sm">table_chart</span>
               <span className="hidden sm:inline">Dataset</span>
+            </button>
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className="px-3 py-1.5 bg-[#F1F5F9] text-xs font-semibold text-[#0F172A] rounded-lg hover:bg-[#E2E8F0] transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-sm">insights</span>
+              <span className="hidden sm:inline">Dashboard</span>
             </button>
             <button
               onClick={() => onNavigate('upload')}
@@ -394,83 +401,6 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
-
-      {/* Right Panel (Active Analytics Sidebar) */}
-      <aside className="w-full lg:w-[300px] xl:w-[360px] bg-[#F8FAFC] h-auto lg:h-full flex flex-col shrink-0 border-t lg:border-t-0 lg:border-l border-[#E2E8F0]">
-        <div className="h-16 flex items-center px-6 border-b border-[#E2E8F0] shrink-0">
-          <span className="material-symbols-outlined text-[#004ac6] mr-2">analytics</span>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">
-            Computation Dashboard
-          </h3>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
-          {activeResult ? (
-            <>
-              {/* Active Chart Card */}
-              {activeResult.chart && activeResult.chart.type !== 'none' && (
-                <div className="bg-white rounded-xl p-4 shadow-xs border border-[#E2E8F0]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-[#0F172A]">{activeResult.chart.title}</span>
-                    <span className="text-[10px] bg-blue-100 text-[#004ac6] font-bold px-2 py-0.5 rounded uppercase">
-                      {activeResult.chart.type}
-                    </span>
-                  </div>
-                  <div className="h-44 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={activeResult.chart.data}>
-                        <XAxis dataKey="name" stroke="#64748B" fontSize={10} />
-                        <YAxis stroke="#64748B" fontSize={10} />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#004ac6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
-              {/* Code Card */}
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-[#0F172A] block">Executed Pandas Script</span>
-                <div className="bg-[#0F172A] rounded-xl p-3 text-emerald-400 font-mono text-xs overflow-x-auto">
-                  <pre>{activeResult.pythonCode}</pre>
-                </div>
-              </div>
-
-              {/* Execution Specs */}
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#64748B]">Dataset Rows Analyzed</span>
-                  <span className="font-semibold text-[#0F172A]">{activeResult.rowsUsed.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#64748B]">Execution Time</span>
-                  <span className="font-semibold text-[#0F172A]">{activeResult.executionTimeMs} ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#64748B]">Data Accuracy</span>
-                  <span className="font-semibold text-green-600">100% Deterministic</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="p-6 text-center text-xs text-[#64748B]">
-              <span className="material-symbols-outlined text-3xl text-[#004ac6] mb-2 block">insights</span>
-              Ask a question in the chat to generate Pandas analytics, charts, and execution logs.
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 border-t border-[#E2E8F0] bg-white">
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xs"
-          >
-            <span className="material-symbols-outlined text-base">monitoring</span>
-            View Full Statistics Dashboard
-          </button>
-        </div>
-      </aside>
     </div>
   );
 };
