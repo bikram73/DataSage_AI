@@ -314,7 +314,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
           </div>
           <div className="pt-6 border-t border-[#c3c6d7]/30 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-[#737686]">© 2024 DataSage AI. Powered by Advanced Analytics.</p>
+            <p className="text-xs text-[#737686]">© 2026 DataSage AI. Powered by Advanced Analytics.</p>
             <div className="flex gap-6">
               <a className="text-[#737686] hover:text-[#004ac6] transition-colors" href="#"><span className="material-symbols-outlined text-xl">public</span></a>
               <a className="text-[#737686] hover:text-[#004ac6] transition-colors" href="#"><span className="material-symbols-outlined text-xl">share</span></a>
