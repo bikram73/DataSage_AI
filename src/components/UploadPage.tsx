@@ -1,9 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { parseSpreadsheetFile } from '../utils/fileParser';
 import { uploadCustomDataset, loadSampleDataset, fetchSampleDatasets, fetchDatasetPreview, clearDataset, DatasetInfo } from '../services/api';
+import { SAMPLE_DATASETS } from '../data/sampleDatasets';
 
 interface UploadPageProps {
   onNavigate: (tab: string) => void;
+}
+
+export function downloadSampleCSV(sampleId: string = 'sales_data') {
+  const dataset = SAMPLE_DATASETS[sampleId] || SAMPLE_DATASETS.sales_data;
+  if (!dataset || !dataset.rows || dataset.rows.length === 0) return;
+
+  const headers = Object.keys(dataset.rows[0]);
+  const csvContent = [
+    headers.join(','),
+    ...dataset.rows.map((row) =>
+      headers
+        .map((header) => {
+          const val = row[header];
+          if (val === null || val === undefined) return '';
+          const str = String(val);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        })
+        .join(',')
+    ),
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  const downloadName = dataset.name.replace(/\.(xlsx|xls)$/i, '.csv');
+  link.setAttribute('download', downloadName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
@@ -132,27 +167,81 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
 
         {/* Idle Drag & Drop Zone */}
         {uploadState === 'idle' && (
-          <div
-            id="drop-zone"
-            onClick={() => fileInputRef.current?.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-2xl bg-[#F8FAFC] hover:border-[#004ac6] hover:bg-[#004ac6]/5 transition-all duration-300 p-8 sm:p-12 flex flex-col items-center justify-center text-center"
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv, .xls, .xlsx"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <div className="w-16 h-16 rounded-2xl bg-[#004ac6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[#004ac6] text-4xl">upload_file</span>
+          <div className="flex flex-col gap-3">
+            <div
+              id="drop-zone"
+              onClick={() => fileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              className="relative cursor-pointer group border-2 border-dashed border-[#CBD5E1] rounded-2xl bg-[#F8FAFC] hover:border-[#004ac6] hover:bg-[#004ac6]/5 transition-all duration-300 p-8 sm:p-10 flex flex-col items-center justify-center text-center"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv, .xls, .xlsx"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <div className="w-16 h-16 rounded-2xl bg-[#004ac6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[#004ac6] text-4xl">upload_file</span>
+              </div>
+              <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-lg text-[#0F172A] mb-1">
+                Click to upload or drag and drop spreadsheet
+              </h3>
+              <p className="text-xs sm:text-sm text-[#64748B] mb-3">
+                Supported formats: CSV, XLS, XLSX (Max 100MB)
+              </p>
+
+              {/* In-Drop-Zone Quick Download Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadSampleCSV('sales_data');
+                }}
+                className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-[#CBD5E1] hover:border-[#004ac6] hover:bg-blue-50 text-xs font-semibold text-[#004ac6] shadow-xs transition-all"
+              >
+                <span className="material-symbols-outlined text-sm">download</span>
+                <span>Download Sample File (Sales_Report.csv)</span>
+              </button>
             </div>
-            <h3 className="font-['Plus_Jakarta_Sans'] font-semibold text-lg text-[#0F172A] mb-1">
-              Click to upload or drag and drop spreadsheet
-            </h3>
-            <p className="text-xs sm:text-sm text-[#64748B]">Supported formats: CSV, XLS, XLSX (Max 100MB)</p>
+
+            {/* Quick Sample File Download Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+              <div className="flex items-center gap-1.5 text-xs text-[#0F172A] font-medium">
+                <span className="material-symbols-outlined text-[#004ac6] text-base">download_for_offline</span>
+                <span>Download sample spreadsheets to your computer:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => downloadSampleCSV('sales_data')}
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  title="Download Sales_Report.csv (1,000 rows)"
+                >
+                  <span className="material-symbols-outlined text-xs">download</span>
+                  <span>Sales_Report.csv</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadSampleCSV('hr_analytics')}
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  title="Download HR_Employee_Analytics.csv (500 rows)"
+                >
+                  <span className="material-symbols-outlined text-xs">download</span>
+                  <span>HR_Analytics.csv</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadSampleCSV('marketing_campaigns')}
+                  className="px-2.5 py-1 bg-white hover:bg-blue-100 text-[#004ac6] border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                  title="Download Marketing_Campaign_ROI.csv (350 rows)"
+                >
+                  <span className="material-symbols-outlined text-xs">download</span>
+                  <span>Marketing_ROI.csv</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -294,11 +383,25 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate }) => {
                   </div>
                   <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed mb-3">{sample.description}</p>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-[#64748B] border-t border-slate-100 pt-2">
-                  <span>{sample.rowCount.toLocaleString()} rows • {sample.columnCount} cols</span>
-                  <span className="text-[#004ac6] font-semibold flex items-center gap-0.5">
-                    Select <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </span>
+                <div className="flex items-center justify-between text-[11px] text-[#64748B] border-t border-slate-100 pt-2 gap-1">
+                  <span className="truncate">{sample.rowCount.toLocaleString()} rows • {sample.columnCount} cols</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadSampleCSV(sample.id);
+                      }}
+                      className="text-slate-600 hover:text-[#004ac6] hover:bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-0.5 font-medium transition-colors"
+                      title="Download as CSV file"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">download</span>
+                      <span>CSV</span>
+                    </button>
+                    <span className="text-[#004ac6] font-semibold flex items-center gap-0.5">
+                      Load <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
